@@ -62,5 +62,20 @@ def rubric() -> None:
     console.print(f"[bold]{len(rules)}[/bold] cards total\n")
 
 
+@app.command()
+def run(
+    models: list[str] = typer.Option(..., "--models", "-m", help="provider/model ids, e.g. anthropic/claude-sonnet-4-5"),
+    seeds: int = typer.Option(1, help="runs per task/model for variance"),
+    families: list[str] = typer.Option(None, "--family", "-f", help="limit to chart families"),
+    concurrency: int = typer.Option(6, help="max in-flight model calls"),
+    out: str = typer.Option("results", help="output directory"),
+    judge: bool = typer.Option(False, help="also run the vision judge (needs rendering + a VLM)"),
+) -> None:
+    """Run the leaderboard: each model produces a chart per task; score all. Needs provider API keys."""
+    from .run import run_benchmark  # imported lazily so `compose` needs no heavy deps
+
+    run_benchmark(models=models, seeds=seeds, families=families, concurrency=concurrency, out=out, judge=judge)
+
+
 if __name__ == "__main__":
     app()
