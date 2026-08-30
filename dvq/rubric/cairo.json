@@ -1,0 +1,148 @@
+{
+  "source": "cairo",
+  "rules": [
+    {
+      "id": "cairo-1",
+      "principle": "Bar charts must have a value axis that starts at zero because bar length encodes magnitude and a truncated baseline exaggerates differences.",
+      "applies_when": "any chart whose primary mark is a bar, column, area, or filled region encoding a quantity by extent from a baseline",
+      "check": {
+        "type": "deterministic",
+        "detail": "Inspect the value-axis domain in the plan (or the SVG scale/tick values). For bar or area marks assert domain min == 0; flag any positive lower bound."
+      },
+      "severity": "high",
+      "fix": "Set the value axis lower bound to 0; if small differences must be emphasized, switch to a dot plot or line chart where a non-zero baseline is acceptable."
+    },
+    {
+      "id": "cairo-2",
+      "principle": "Avoid dual y-axes; two independent scales on one plot let the author fabricate correlation by arbitrarily aligning the axes.",
+      "applies_when": "user asks to overlay two series with different units or magnitudes on a single line/bar chart",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count distinct value scales bound to the same plot area. Flag when two or more y-scales with different domains/units share one cartesian frame."
+      },
+      "severity": "high",
+      "fix": "Split into small multiples (one panel per series, shared x-axis), or index both series to a common baseline (e.g. percent change from period 0) on a single scale."
+    },
+    {
+      "id": "cairo-3",
+      "principle": "Do not encode a one-dimensional quantity by area or radius; humans read area far less accurately than length or position, so area systematically distorts magnitude.",
+      "applies_when": "a scalar value is mapped to circle radius, bubble size, 2D icon area, or a square/area glyph",
+      "check": {
+        "type": "deterministic",
+        "detail": "Inspect the size encoding in the plan. Flag when a scalar is mapped to radius/side (nonlinear) rather than area, and flag any use of area encoding for a value that a bar or dot could show along a common scale."
+      },
+      "severity": "high",
+      "fix": "Encode the value with length or position (bar or dot plot). If a bubble is required for a legitimate reason, scale area (not radius) linearly to the value and label values directly."
+    },
+    {
+      "id": "cairo-4",
+      "principle": "Prefer encodings high on the graphical-perception ranking: position along a common scale, then position on non-aligned scales, then length/direction/angle (one tier), then area, then volume/curvature, then shading/color saturation (Cleveland & McGill 1984).",
+      "applies_when": "choosing a chart type or encoding channel for a quantitative comparison",
+      "check": {
+        "type": "deterministic",
+        "detail": "Map the plan's primary encoding channel onto the ranked list and flag when a lower-ranked channel (angle=pie, area=treemap/bubble, saturation=heatmap) is used for a comparison that a higher-ranked channel (bar/dot on a common axis) could carry."
+      },
+      "severity": "medium",
+      "fix": "Re-encode the key comparison using position on a common scale (aligned bar or dot plot); reserve area/saturation for secondary or explicitly imprecise dimensions."
+    },
+    {
+      "id": "cairo-5",
+      "principle": "Choose the functional chart form for the task: the shape must fit the question (change over time, part-to-whole, distribution, correlation, ranking), not the author's taste.",
+      "applies_when": "any figure where the chart type is being selected against a stated analytical intent",
+      "check": {
+        "type": "manual",
+        "detail": "Compare the stated intent to the chosen form (e.g. change-over-time -> line/slope not paired pies; part-to-whole across categories -> stacked/100% bar not many pies; distribution -> histogram/box). Flag mismatches."
+      },
+      "severity": "medium",
+      "fix": "Swap to the form that matches the task; e.g. replace multiple pies comparing periods with a single slope or line chart."
+    },
+    {
+      "id": "cairo-6",
+      "principle": "Never truncate or crop the visible data range to cherry-pick a trend; the window shown must be justified by the analytical question, not chosen to manufacture a story.",
+      "applies_when": "a time series or ranged dataset is displayed over a sub-window of the available data, or the axis extent excludes available observations",
+      "check": {
+        "type": "manual",
+        "detail": "Compare the plotted x-domain against the full extent of the supplied data. Flag when the rendered range is a strict subset without a stated reason, especially when the excluded points would reverse or flatten the visible trend."
+      },
+      "severity": "high",
+      "fix": "Plot the full available range, or annotate and justify the chosen window; show the broader context as an inset or reference band."
+    },
+    {
+      "id": "cairo-7",
+      "principle": "Every axis and encoded quantity must state its units, scale, and whether values are absolute, per-capita, indexed, or inflation-adjusted, so the reader can judge truthfulness.",
+      "applies_when": "any quantitative chart with numeric axes or a value legend",
+      "check": {
+        "type": "deterministic",
+        "detail": "Assert each value axis and size/color legend in the plan has a non-empty unit/label. Flag missing units, missing normalization note when the data is a rate or index, and missing currency/base-year for monetary series."
+      },
+      "severity": "medium",
+      "fix": "Add axis titles with explicit units; label normalized values (per 100k, index=100 at base year, real 2020 USD) directly on the axis or in a subtitle."
+    },
+    {
+      "id": "cairo-8",
+      "principle": "Remove decorative non-data ink (3D extrusion, drop shadows, gradients, background images, redundant gridlines) because it adds no information and distorts perception.",
+      "applies_when": "any figure that includes styling beyond the marks, axes, and labels needed to read the data",
+      "check": {
+        "type": "deterministic",
+        "detail": "Scan the SVG/plan for 3D transforms, filter drop-shadows, decorative fills/gradients on data marks, background images, and gridlines denser than the tick set. Flag each occurrence."
+      },
+      "severity": "medium",
+      "fix": "Strip 3D and shadow effects, flatten fills to solid category colors, and reduce gridlines to a light reference set aligned with labeled ticks."
+    },
+    {
+      "id": "cairo-9",
+      "principle": "Disclose uncertainty; point estimates shown without error bars, confidence bands, or sample-size caveats imply a false precision.",
+      "applies_when": "the data carries known uncertainty (survey margins, forecasts, estimates, small samples, model projections)",
+      "check": {
+        "type": "deterministic",
+        "detail": "Check whether the data includes uncertainty fields (CI, stderr, n, margin) and whether the plan renders them. Flag when uncertainty is present in the data but absent from the encoding."
+      },
+      "severity": "high",
+      "fix": "Add error bars, confidence bands, or a fan/cone for forecasts; annotate sample size and note where estimates are unreliable."
+    },
+    {
+      "id": "cairo-10",
+      "principle": "The visualization must show enough data to be honest; do not display a single cherry-picked slice, ratio, or aggregate that hides the underlying distribution or contradicting groups.",
+      "applies_when": "a claim rests on one aggregate number, a lone comparison, or a headline ratio drawn from a richer dataset",
+      "check": {
+        "type": "manual",
+        "detail": "Assess whether the figure omits context (denominators, base rates, per-group breakdown, longer history) that would materially change the reader's conclusion. Flag single-aggregate framings of multi-group data."
+      },
+      "severity": "medium",
+      "fix": "Add the denominator or base rate, break the aggregate into its groups, or extend the time range so the reader sees the full picture."
+    },
+    {
+      "id": "cairo-11",
+      "principle": "Color must map to the data honestly: use a sequential ramp for ordered magnitude, a diverging ramp around a meaningful midpoint, and categorical hues only for unordered categories.",
+      "applies_when": "any chart that encodes a variable with color (choropleth, heatmap, category fills)",
+      "check": {
+        "type": "deterministic",
+        "detail": "Check that the palette family in the plan matches the variable type: ordered->sequential, signed-around-center->diverging with correct zero point, unordered->categorical. Flag rainbow ramps on ordered data and diverging ramps with an arbitrary midpoint."
+      },
+      "severity": "medium",
+      "fix": "Replace rainbow/arbitrary palettes with a perceptually ordered sequential ramp, or a diverging ramp centered on the true neutral value (e.g. 0 or the mean)."
+    },
+    {
+      "id": "cairo-12",
+      "principle": "Make the intended reading unambiguous by directly labeling and annotating the key data points instead of forcing legend round-trips or leaving the takeaway implicit.",
+      "applies_when": "figures meant for communication (not raw exploration) with a specific message or highlighted series",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, confirm the focal element is visually distinguished and directly labeled, that annotations do not overlap marks or each other, and that the reader can locate the takeaway without decoding a distant legend."
+      },
+      "severity": "low",
+      "fix": "Add direct labels on highlighted lines/bars, place a short annotation naming the takeaway, and de-emphasize context series with muted color."
+    },
+    {
+      "id": "cairo-13",
+      "principle": "Consistent, linear scaling is required within an encoding; do not mix or break scales (log where readers expect linear, uneven bins, inconsistent bar widths) without explicit signposting.",
+      "applies_when": "any axis or size encoding, especially when a log scale, irregular intervals, or variable bin widths are used",
+      "check": {
+        "type": "deterministic",
+        "detail": "Verify axis tick intervals are evenly spaced for a linear scale, bar widths are uniform, and any log scale is labeled as such. Flag unlabeled log axes, non-monotone or uneven tick steps, and mismatched category widths."
+      },
+      "severity": "medium",
+      "fix": "Use a uniform linear scale with even intervals, or clearly label a log axis and its tick decades; make all category bars equal width."
+    }
+  ]
+}

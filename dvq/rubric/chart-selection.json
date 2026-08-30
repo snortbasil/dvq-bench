@@ -1,0 +1,184 @@
+{
+  "source": "chart-selection",
+  "meta": {
+    "purpose": "Map analytical intent and data shape to chart type, and flag documented anti-patterns. Consulted after the design plan declares an intent and the data schema is known, and again against the rendered SVG.",
+    "perceptual_basis": {
+      "citation": "Cleveland, W. S., & McGill, R. (1984). Graphical Perception: Theory, Experimentation, and Application to the Development of Graphical Methods. Journal of the American Statistical Association, 79(387), 531-554.",
+      "accuracy_ranking": [
+        "1. position along a common scale",
+        "2. position along identical, nonaligned scales",
+        "3. length, direction, angle",
+        "4. area",
+        "5. volume, curvature",
+        "6. shading, color saturation"
+      ],
+      "note": "Lower rank = more accurate quantitative decoding. Chart selection means choosing the mark whose primary channel sits at the lowest feasible rank for the declared intent."
+    },
+    "intent_to_chart": {
+      "comparison": "grouped/sorted bar (position on common scale); dot plot for many categories",
+      "trend_over_time": "line chart (ordered x = time); connected scatter or slope chart for few points",
+      "distribution": "histogram or density for one variable; box plot (Tukey, EDA 1977) or violin for group comparison; strip/beeswarm for small n",
+      "part_to_whole": "stacked bar for one-to-few totals; treemap only for hierarchy overview; pie only for 2-3 slices of one whole",
+      "relationship": "scatter plot (two quantitative); binned heatmap for high n; add trend line for correlation",
+      "ranking": "sorted horizontal bar or dot plot, ordered by value",
+      "flow": "Sankey (Sankey 1898, band width proportional to flow magnitude); alluvial for categorical transitions; chord for symmetric flows",
+      "uncertainty": "error bars, confidence bands, or gradient/fan for a mean or estimate; do not present an estimate as a bare point/line without its interval"
+    }
+  },
+  "rules": [
+    {
+      "id": "chart-selection-1",
+      "principle": "Match the mark type to the declared analytical intent using the intent-to-chart map before any styling.",
+      "applies_when": "The design plan states an intent (comparison, trend, distribution, part-to-whole, relationship, ranking, flow, uncertainty) and a mark.type.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Look up plan.intent in meta.intent_to_chart and confirm plan.mark.type is among the recommended types for that intent; flag any pairing not listed (e.g. intent=distribution with mark.type=pie)."
+      },
+      "severity": "high",
+      "fix": "Replace the mark with the first recommended type for the declared intent, or correct the stated intent if the mark is deliberate."
+    },
+    {
+      "id": "chart-selection-2",
+      "principle": "For comparison or ranking of magnitudes across categories, encode value as bar length or dot position on a common zero-based scale, not as angle or area.",
+      "applies_when": "Intent is comparison or ranking over one quantitative value across nominal categories.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Flag if mark.type is in {pie, donut, arc, bubble, packed-circle, treemap} while intent is comparison|ranking. On SVG, arc <path> segments or <circle> sized by the compared field are violations."
+      },
+      "severity": "high",
+      "fix": "Switch to a sorted bar or dot plot on a shared axis; reserve angle/area encodings for rough overviews only."
+    },
+    {
+      "id": "chart-selection-3",
+      "principle": "For trend over time, use a line chart with time on an ordered x-axis; do not use an unordered or categorical layout for temporal data.",
+      "applies_when": "The data has a temporal or otherwise ordinal x field and intent is trend_over_time.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm the x field type is temporal|ordinal and its scale preserves natural order; flag mark.type=bar for a dense continuous time series, and flag any reordering of time (e.g. sorted by value) on the x-axis."
+      },
+      "severity": "high",
+      "fix": "Use a line (or connected scatter for sparse points) with time sorted ascending on x; use bars over time only for a small number of discrete periods."
+    },
+    {
+      "id": "chart-selection-4",
+      "principle": "For a single-variable distribution, use a histogram, density, or box/violin plot, never a bar chart of raw unaggregated rows.",
+      "applies_when": "Intent is distribution and the plan encodes the spread or shape of one quantitative variable.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For intent=distribution confirm the variable is aggregated into bins/quantiles (histogram binCount present, or box-plot summary stats) rather than one mark per raw row; flag a plain category bar of un-binned values."
+      },
+      "severity": "high",
+      "fix": "Bin the variable (histogram/density) or summarize it (box/violin) so shape, center, and spread are visible; use box or violin when comparing distributions across groups."
+    },
+    {
+      "id": "chart-selection-5",
+      "principle": "For a relationship between two quantitative variables, use a scatter plot; switch to a binned or 2D-density heatmap when overplotting hides structure.",
+      "applies_when": "Intent is relationship over two quantitative fields.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm mark.type is point|scatter|heatmap for two quantitative encodings. Flag when point count exceeds a density threshold (e.g. >2000 marks) with no binning/opacity strategy declared in the plan."
+      },
+      "severity": "medium",
+      "fix": "Use a scatter for moderate n; for large n add alpha, 2D binning, or hexbin/density so the joint distribution is legible."
+    },
+    {
+      "id": "chart-selection-6",
+      "principle": "Reserve part-to-whole charts (pie, stacked, treemap) for when the parts genuinely sum to a meaningful whole, and cap pie/donut at two or three slices.",
+      "applies_when": "Intent is part_to_whole, or mark.type is pie|donut|stacked-bar|treemap.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm parts sum to 100% of one whole (values non-negative, mutually exclusive). Flag pie/donut with more than 3 slices, and flag part-to-whole marks whose values do not sum to the stated total."
+      },
+      "severity": "medium",
+      "fix": "For more than 3 parts use a sorted bar (comparison) or a single stacked bar (composition); ensure parts are exhaustive and non-overlapping, or relabel the intent."
+    },
+    {
+      "id": "chart-selection-7",
+      "principle": "Use a Sankey or alluvial diagram for flow between stages, with band width strictly proportional to flow magnitude and conserved across each node.",
+      "applies_when": "Intent is flow, or data is source-target-value triples describing transfers between nodes/stages.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm mark.type is sankey|alluvial|chord for flow data. On SVG, sum of inbound band widths equals sum of outbound at each node (within tolerance); flag non-conserving or non-proportional band widths."
+      },
+      "severity": "medium",
+      "fix": "Encode each link's value as band width on one scale and balance flows per node; if magnitudes are not conserved, use a network/arc diagram instead."
+    },
+    {
+      "id": "chart-selection-8",
+      "principle": "Show uncertainty explicitly: any plotted estimate, mean, or forecast must carry its interval (error bar, CI band, or fan), never appear as a bare point or line.",
+      "applies_when": "The plan plots an estimated, sampled, modeled, or forecast quantity and the data or plan carries a variance/CI/std field.",
+      "check": {
+        "type": "deterministic",
+        "detail": "When a field is marked estimate|mean|forecast and an uncertainty field exists in the data, confirm the plan renders an error bar, band, or interval mark; flag its absence."
+      },
+      "severity": "high",
+      "fix": "Add error bars or a confidence band from the available uncertainty field; if no uncertainty is quantified, annotate the estimate as a point estimate without implied precision."
+    },
+    {
+      "id": "chart-selection-9",
+      "principle": "Never plot two unrelated series on a dual y-axis, because arbitrary axis scaling manufactures apparent correlation.",
+      "applies_when": "The plan defines two independent quantitative y-scales (secondary axis) for two series.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Flag the presence of a secondary y-axis / independent second y-scale in the plan. On SVG, two distinct y-axis tick groups with different domains bound to different series."
+      },
+      "severity": "high",
+      "fix": "Split into small multiples with aligned time axes, index both series to a common base (e.g. =100 at t0), or plot the relationship directly as a scatter."
+    },
+    {
+      "id": "chart-selection-10",
+      "principle": "Do not render faux-3D, exploded, or perspective versions of any chart; depth distorts the length/area the reader must decode.",
+      "applies_when": "The plan or renderer requests 3d, isometric, extruded, exploded, or perspective marks on 2D data.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Flag if mark.type or style contains 3d|extrude|explode|perspective|isometric. On SVG, offset duplicate polygons or depth gradients simulating volume."
+      },
+      "severity": "high",
+      "fix": "Render the flat 2D form of the chart and remove all depth/explosion effects."
+    },
+    {
+      "id": "chart-selection-11",
+      "principle": "When one comparison must be split across categories, prefer small multiples with a shared scale over a single overloaded chart with many overlapping series.",
+      "applies_when": "The plan overlays many series (roughly >5) of the same measure on one set of axes, or intent is comparison across a facetable dimension.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, check whether individual series are separable or collapse into a spaghetti tangle; overlapping indistinguishable lines/areas indicate faceting is warranted."
+      },
+      "severity": "medium",
+      "fix": "Facet into small multiples with an identical shared axis domain per panel; optionally highlight one series against a muted background set."
+    },
+    {
+      "id": "chart-selection-12",
+      "principle": "Choose the color-scale family to match the data type: sequential single-hue for ordered magnitude, diverging for a meaningful midpoint, categorical only for nominal groups.",
+      "applies_when": "A field is encoded to color as a primary or secondary channel (heatmap, choropleth, category color).",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm scale family matches field type: quantitative->sequential (e.g. Blues, Viridis); quantitative-with-midpoint->diverging (e.g. RdBu, BrBG); nominal->categorical. Flag a categorical/rainbow scale on a quantitative field or a sequential scale on nominal categories."
+      },
+      "severity": "medium",
+      "fix": "Swap to the matching palette family (ColorBrewer sequential/diverging for ordered data, a categorical set for nominal); never encode order with rainbow hue."
+    },
+    {
+      "id": "chart-selection-13",
+      "principle": "Sort categorical axes by value for comparison and ranking; keep the natural order only for inherently ordinal or temporal categories.",
+      "applies_when": "Intent is comparison or ranking over a nominal categorical axis.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For intent=comparison|ranking with a nominal category axis, confirm the axis is sorted by the encoded value; flag alphabetical or arbitrary order. Exempt fields typed ordinal|temporal, which must keep natural order."
+      },
+      "severity": "low",
+      "fix": "Sort the category axis by the plotted value (descending for ranking); preserve natural sequence only for ordinal or time categories."
+    },
+    {
+      "id": "chart-selection-14",
+      "principle": "Verify the chosen chart's focal comparison is visually resolvable in the render, not merely correct in the plan.",
+      "applies_when": "Any final chart before delivery, once an SVG is rendered.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, confirm the reader can perform the intended decode: the key comparison stands out, marks do not fully occlude one another, and the primary quantity is read from the highest-accuracy channel present rather than an ambiguous one."
+      },
+      "severity": "medium",
+      "fix": "Adjust encoding, ordering, opacity, or faceting so the declared primary comparison is the most legible relationship in the figure."
+    }
+  ]
+}

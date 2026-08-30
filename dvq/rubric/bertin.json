@@ -1,0 +1,159 @@
+{
+  "source": "bertin",
+  "rules": [
+    {
+      "id": "bertin-1",
+      "principle": "Encode quantitative (ratio/interval) data with position or size only, since these are Bertin's sole quantitative visual variables.",
+      "applies_when": "A data field typed as quantitative (continuous or ratio-scale numeric) is mapped to a visual channel in the design plan.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For every plan encoding where field.type == 'quantitative', assert channel in {'x','y','position','size','length','area','radius'}. Flag if the quantitative field is carried by hue, shape, texture, orientation, or value alone."
+      },
+      "severity": "high",
+      "fix": "Reassign the quantitative field to a positional channel (x/y) or size; demote the current channel to a secondary or categorical role."
+    },
+    {
+      "id": "bertin-2",
+      "principle": "Encode nominal (categorical, unordered) data with color hue or orientation, which are selective and associative, or with shape, which is associative; all three carry categories, but prefer hue or orientation when the reader must isolate a category at a glance, since shape alone is not selective.",
+      "applies_when": "A data field typed as nominal/categorical with no inherent order is mapped to a visual channel.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For every plan encoding where field.type == 'nominal', assert channel in {'hue','color','shape','symbol','orientation'} or a discrete positional facet. Flag nominal fields mapped to size, value/lightness, or a continuous sequential scale."
+      },
+      "severity": "high",
+      "fix": "Map the nominal field to hue or shape; if too many categories, group them or switch to small multiples."
+    },
+    {
+      "id": "bertin-3",
+      "principle": "Reserve color hue for nominal categories only; never use hue to encode an ordered or quantitative field, because hue is not perceptually ordered.",
+      "applies_when": "A field mapped to the hue/color channel is typed as ordinal or quantitative, or the color scale is a rainbow/multi-hue gradient standing in for magnitude.",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the plan, if channel == 'hue'/'color', assert the bound field.type == 'nominal'. Additionally scan the SVG/scale definition: flag a color scale that interpolates across multiple distinct hues (e.g. rainbow) while bound to a numeric domain."
+      },
+      "severity": "high",
+      "fix": "Replace the multi-hue gradient with a single-hue sequential value (lightness) scale for quantitative data, or a two-hue diverging value scale for signed data; keep hue only for the categorical dimension."
+    },
+    {
+      "id": "bertin-4",
+      "principle": "Encode ordinal or quantitative magnitude carried by color with value (lightness), not hue, since value is Bertin's ordered retinal variable.",
+      "applies_when": "The design intends to convey rank or magnitude through a color channel (choropleth, heatmap, shaded encoding).",
+      "check": {
+        "type": "deterministic",
+        "detail": "For any encoding where field.type in {'ordinal','quantitative'} and the channel is color-based, assert the scale varies primarily in lightness/value (single-hue sequential or two-hue diverging) rather than hue. Inspect scale type == 'sequential' or 'diverging'."
+      },
+      "severity": "high",
+      "fix": "Switch the color scale to a sequential (one hue, dark-to-light) or diverging (two hues, dark-light-dark) value ramp such as a ColorBrewer sequential/diverging palette."
+    },
+    {
+      "id": "bertin-5",
+      "principle": "Match every encoding's visual-variable organization level to the data type: nominal needs a selective variable, ordinal needs an ordered variable, quantitative needs a quantitative variable.",
+      "applies_when": "Any field-to-channel mapping exists in the design plan.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Build a lookup: quantitative variables={position,size}; ordered variables={position,size,value,grain/texture}; selective variables={all except shape}. For each encoding assert the channel's max organization level >= the field's required level (quantitative>ordered>selective/nominal)."
+      },
+      "severity": "high",
+      "fix": "Promote the field to a channel whose organization level meets or exceeds the data type's requirement (e.g. move an ordinal field off hue onto value or position)."
+    },
+    {
+      "id": "bertin-6",
+      "principle": "Do not use shape to distinguish categories that must be scanned as a group, because shape is the one visual variable Bertin classified as non-selective.",
+      "applies_when": "A nominal field is encoded by marker shape/symbol and the task requires isolating or counting all members of one category at a glance.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, verify that a single shape-coded category can be visually grouped without serial search; if the reader must inspect markers one by one to find a category, the shape encoding fails selectivity."
+      },
+      "severity": "medium",
+      "fix": "Re-encode the grouping category with hue (selective) and keep shape only as a redundant or secondary cue."
+    },
+    {
+      "id": "bertin-7",
+      "principle": "Keep the number of distinguishable hue categories within perceptual limits (roughly 7, hard cap ~12); beyond that, hue stops being selective.",
+      "applies_when": "A nominal field with many distinct values is mapped to color hue.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count distinct categories bound to the hue channel; flag when count > 7 (warn) and count > 12 (fail)."
+      },
+      "severity": "medium",
+      "fix": "Aggregate minor categories into an 'other' bin, use small multiples/faceting, or add position/label redundancy so categories no longer rely on hue alone."
+    },
+    {
+      "id": "bertin-8",
+      "principle": "Encode a single data attribute per visual variable per mark, unless redundant encoding is deliberate; Bertin treats each retinal variable as one independent dimension.",
+      "applies_when": "The design plan binds two or more distinct, unrelated data fields to the same visual variable on the same mark.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Group plan encodings by channel; flag any channel bound to more than one distinct field unless the encoding is explicitly marked redundant (same field, two channels is allowed and encouraged)."
+      },
+      "severity": "medium",
+      "fix": "Assign each extra attribute to a separate free visual variable, or drop the overloaded dimension; convert to small multiples if variables are exhausted."
+    },
+    {
+      "id": "bertin-9",
+      "principle": "Order the visual sequence of an ordinal encoding to match the data order, since an ordered visual variable must present a clear linear progression.",
+      "applies_when": "An ordinal field is encoded by value/lightness, size, or a discrete categorical color/position scale.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For ordinal encodings, assert the scale's output range is monotonic in the ordered variable (lightness increases/decreases monotonically, sizes increase with rank, category order in the domain matches the data's defined order)."
+      },
+      "severity": "medium",
+      "fix": "Sort the scale domain to the field's natural order and use a monotonic value/size ramp so the visual progression tracks the data order."
+    },
+    {
+      "id": "bertin-10",
+      "principle": "Prefer position over all other variables when accuracy of quantitative comparison matters, as position is the most precise of Bertin's quantitative variables.",
+      "applies_when": "The primary analytical task is comparing quantitative values across marks (e.g. ranking, precise magnitude reading).",
+      "check": {
+        "type": "manual",
+        "detail": "Confirm the most important quantitative field is carried on a positional axis (x or y) rather than on size, area, or color; requires reading the design plan's stated task/intent against its primary encoding."
+      },
+      "severity": "medium",
+      "fix": "Restructure so the key quantitative comparison rides on a common-scale positional axis (e.g. convert a size-encoded bubble comparison to a bar or dot plot)."
+    },
+    {
+      "id": "bertin-11",
+      "principle": "Avoid encoding quantitative data with area or 2D size scaled linearly by value, because area is a weaker quantitative channel that distorts perceived magnitude.",
+      "applies_when": "A quantitative field is mapped to a 2D mark's area, radius, or bubble size.",
+      "check": {
+        "type": "deterministic",
+        "detail": "If a quantitative field maps to a circle/area mark, assert the scale is area-proportional (radius = k * sqrt(value)), not radius-linear; flag radius-linear scaling and flag when position could have been used instead."
+      },
+      "severity": "medium",
+      "fix": "Use an area-proportional (sqrt) scale for size, or move the quantitative field to a positional/length channel where perception is more accurate."
+    },
+    {
+      "id": "bertin-12",
+      "principle": "Use texture/grain only for nominal or coarse ordinal distinctions and never as the sole carrier of precise quantitative values.",
+      "applies_when": "A field is encoded by texture, pattern, or grain (e.g. hatching density) in the design plan.",
+      "check": {
+        "type": "deterministic",
+        "detail": "If channel == 'texture'/'grain'/'pattern', assert field.type in {'nominal','ordinal'} and not 'quantitative'; flag any quantitative field relying solely on texture."
+      },
+      "severity": "low",
+      "fix": "Reserve texture for categories or coarse ranks; move quantitative magnitude to position, size, or value."
+    },
+    {
+      "id": "bertin-13",
+      "principle": "Add redundant encoding (e.g. hue plus shape, or value plus position) for critical distinctions to survive grayscale printing and color-vision deficiency.",
+      "applies_when": "A category or ordinal distinction critical to the figure's message is carried by a single retinal variable, especially hue.",
+      "check": {
+        "type": "vision",
+        "detail": "Render the SVG in grayscale and, separately, under a deuteranopia simulation; verify the critical distinction remains legible. If categories collapse, the single-variable encoding is insufficient."
+      },
+      "severity": "low",
+      "fix": "Add a second, orthogonal visual variable (shape, position, direct label, or value) as redundant reinforcement of the hue encoding."
+    },
+    {
+      "id": "bertin-14",
+      "principle": "Do not use hue or orientation differences to imply that unrelated categories have more or less importance, since these associative variables should keep all marks equally visible.",
+      "applies_when": "A nominal encoding uses hue or orientation and one category is rendered with markedly higher salience (saturation, size) without an intended emphasis reason.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, check that categories encoded by an associative variable read at comparable salience; flag when one nominal category unintentionally dominates because its color is far more saturated or its marks larger."
+      },
+      "severity": "low",
+      "fix": "Equalize saturation/size across the associative categories, or if emphasis is intended, make it deliberate and add an annotation explaining the highlighted category."
+    }
+  ]
+}

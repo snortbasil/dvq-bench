@@ -1,0 +1,125 @@
+{
+  "family": "distribution",
+  "tasks": [
+    {
+      "id": "dis-1",
+      "intent": "Show me the distribution of GDP per capita across all countries in 2022 so I can see how skewed global income is.",
+      "domain": "economics",
+      "data": {
+        "provider": "World Bank",
+        "description": "GDP per capita, PPP (constant 2017 international dollars) for every country in a single year, one value per country.",
+        "shape": "~190 countries x 1 quantitative value",
+        "identifier": "NY.GDP.PCAP.PP.KD",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "histogram (with a considered bin width; a log-scaled x-axis or an accompanying ECDF is defensible given the heavy right skew)",
+        "key_insight": "The distribution is strongly right-skewed: most countries cluster at low-to-middle income with a long thin tail of rich outliers, so the mean sits well above the median."
+      },
+      "failure_modes": [
+        "Plotting a sorted bar chart of every country instead of binning into a histogram, so the reader sees a ranking rather than the shape and spread of the distribution.",
+        "Choosing an arbitrary default bin count (Sturges on a skewed variable) that either over-smooths the tail into one giant bar or shatters the peak into noise, misrepresenting modality.",
+        "Truncating the x-axis to exclude high-income outliers, hiding the long right tail that is the entire point of the figure.",
+        "Encoding frequency with a rainbow fill across bins, implying an ordered categorical meaning to bar color where only bar height (a position/length judgment) carries information.",
+        "Reporting only the mean with a vertical line and omitting the median, so the reader cannot see that skew pulls the two apart."
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "tufte", "cairo", "color"]
+    },
+    {
+      "id": "dis-2",
+      "intent": "Compare the distribution of adult body mass index across a handful of OECD countries — I want to see which populations are shifting heavier, not just the average.",
+      "domain": "health",
+      "data": {
+        "provider": "WHO",
+        "description": "Age-standardized distribution of mean adult BMI by country; per-country summary statistics (median and quantiles) suitable for a boxplot or the underlying survey microdata for a violin/ridgeline.",
+        "shape": "6 countries x 1 quantitative distribution each",
+        "identifier": "NCD_BMI_MEAN",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "small-multiple ridgeline (or horizontal boxplots / violins) with countries sorted by median BMI",
+        "key_insight": "Populations differ not just in central BMI but in spread and right-tail thickness; some countries have shifted the whole distribution rightward while others have fattened only the upper tail."
+      },
+      "failure_modes": [
+        "Reducing each country to a single mean bar, discarding spread and tail shape and defeating the explicit request to see the distribution rather than the average.",
+        "Leaving the countries in alphabetical or data-file order instead of sorting by median, so the reader cannot perceive the ranking or the systematic shift across the group (violates the ordering principle for comparison).",
+        "Assigning each country a saturated hue from a categorical rainbow when the countries form an ordered sequence by median, wasting the color channel and adding visual noise.",
+        "Overlapping violins or boxes so densely that their outlines collide, destroying the figure-ground separation that lets each distribution be read individually.",
+        "Drawing boxplots without indicating sample size or overlaying the raw points, so the reader cannot judge whether tail differences are real or artifacts of thin data."
+      ],
+      "applicable_rules": ["chart-selection", "gestalt", "cleveland-mcgill", "color", "cairo"]
+    },
+    {
+      "id": "dis-3",
+      "intent": "Plot the distribution of daily maximum temperatures at a US city for the last 30 years so I can see how spread out summer heat is and how heavy the extreme-heat tail is.",
+      "domain": "climate",
+      "data": {
+        "provider": "FRED",
+        "description": "Daily maximum temperature observations for a single station aggregated to the summer months across three decades; one temperature value per day.",
+        "shape": "~2,760 daily observations x 1 quantitative value",
+        "identifier": null,
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "histogram or kernel-density plot, with an ECDF as a strong alternative for reading tail probabilities precisely",
+        "key_insight": "The temperature distribution is roughly unimodal but has a noticeably fat upper tail, so extreme-heat days occur far more often than a normal fit would predict."
+      },
+      "failure_modes": [
+        "Drawing a time series line over 30 years instead of a distribution, answering a trend question the user did not ask and hiding the shape and spread entirely.",
+        "Using a bin width so coarse that the fat upper tail is absorbed into the modal bar, erasing exactly the extreme-heat signal the user wants to see.",
+        "Filling the density curve with a red-to-blue diverging ramp keyed to temperature, implying a meaningful zero/midpoint on a channel (fill hue) that carries no quantitative value here.",
+        "Overlaying a smooth normal-curve fit without noting the tail departure, leading the reader to believe extreme days are rarer than the empirical data shows.",
+        "Starting the count axis above zero so bar heights are no longer proportional to frequency, exaggerating differences between bins (a length-judgment violation)."
+      ],
+      "applicable_rules": ["chart-selection", "tufte", "cleveland-mcgill", "color", "cairo"]
+    },
+    {
+      "id": "dis-4",
+      "intent": "Show the age distribution of the US population in 2020 — I want to see the shape of the age structure, the baby-boom bulge and the younger cohorts.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Resident population counts by single-year or five-year age band from the 2020 Census, optionally split by sex for a population pyramid.",
+        "shape": "18 five-year age bands x 1 count (or x 2 sexes)",
+        "identifier": "B01001",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "histogram over ordered age bands (or a back-to-back population pyramid if split by sex)",
+        "key_insight": "The age structure is no longer a clean pyramid: cohort bulges (the baby boom now in older bands) and a narrowing base reveal a maturing, near-stationary population."
+      },
+      "failure_modes": [
+        "Rendering the age bands as a pie or donut, forcing angle/area comparisons across an inherently ordered quantitative axis where adjacency and position carry the meaning.",
+        "Reordering age bands by population size instead of keeping them in natural age order, destroying the readable shape of the age structure.",
+        "Adding gaps between bars so the histogram reads as unrelated categories, breaking the contiguity that signals a continuous binned variable.",
+        "On a sex-split pyramid, using two arbitrary categorical hues with poor luminance contrast rather than a clear paired encoding, making the male/female comparison hard to read at a glance.",
+        "3-D extruded bars that distort height-to-count proportionality through perspective, corrupting the length judgment the chart depends on."
+      ],
+      "applicable_rules": ["chart-selection", "bertin", "cleveland-mcgill", "gestalt", "color"]
+    },
+    {
+      "id": "dis-5",
+      "intent": "Give me the distribution of internet download speeds across countries in 2023 so I can see the global spread and how long the tail of fast-broadband nations is.",
+      "domain": "technology",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Median fixed-broadband download speed per country for a single year, one value per country.",
+        "shape": "~130 countries x 1 quantitative value",
+        "identifier": "fixed-broadband-download-speed",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "histogram (log x-axis or a companion ECDF is defensible given the right skew across two orders of magnitude)",
+        "key_insight": "Broadband speed is right-skewed across a wide range: a dense cluster of slow-to-moderate countries and a thin tail of very fast nations, so median lags the mean substantially."
+      },
+      "failure_modes": [
+        "Drawing a choropleth map instead of a distribution, which answers 'where' but not the requested 'how spread out and how long is the tail', and buries small fast countries under large slow landmasses.",
+        "Binning on a linear axis when the data span two orders of magnitude, so nearly every country falls in the first bin and the fast tail becomes invisible.",
+        "Sorting countries into a long ranked bar chart, which shows order but forces the reader to reconstruct the distribution mentally rather than reading its shape directly.",
+        "Coloring bins with a spectral rainbow that has non-monotonic perceived luminance, so bar fills read as a false ordinal scale competing with the real height encoding.",
+        "Omitting axis labels and units (Mbps) and a clear count axis, leaving the spread uninterpretable and violating the requirement that quantitative axes be honestly and fully labeled."
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "color", "tufte", "typography"]
+    }
+  ]
+}

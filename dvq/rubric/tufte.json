@@ -1,0 +1,159 @@
+{
+  "source": "tufte",
+  "rules": [
+    {
+      "id": "tufte-1",
+      "principle": "Keep the lie factor between 0.95 and 1.05: the visual size of an effect must match its size in the data.",
+      "applies_when": "any chart whose marks encode a quantity by length, area, or position (bar, area, bubble, line)",
+      "check": {
+        "type": "deterministic",
+        "detail": "Lie factor = (relative change in mark magnitude on screen) / (relative change in underlying data value), from The Visual Display of Quantitative Information (1983). For two data points d1,d2 and their rendered magnitudes m1,m2, compute ((m2-m1)/m1)/((d2-d1)/d1). Flag when result < 0.95 or > 1.05. Detect the common cause: a non-zero value axis on a bar chart, or area/radius scaling a 1-D quantity as a 2-D shape."
+      },
+      "severity": "high",
+      "fix": "Make the mark magnitude proportional to the data value: start value axes at zero for bars, scale bubble area (not radius) to the value, and remove any perspective or 3-D depth that inflates magnitude."
+    },
+    {
+      "id": "tufte-2",
+      "principle": "Start the value axis of a bar or area chart at zero.",
+      "applies_when": "bar charts, column charts, histograms, and filled area charts where the mark length encodes the value",
+      "check": {
+        "type": "deterministic",
+        "detail": "Read the value scale domain from the design plan or the axis min in the SVG. Flag when the quantitative axis of a length-encoding mark does not include zero. Line charts and dot plots are exempt because position, not length, carries the value."
+      },
+      "severity": "high",
+      "fix": "Set the value-axis domain minimum to zero for length-encoded marks. If the interesting variation is small relative to the baseline, switch to a dot plot or line chart (which may use a non-zero position axis) rather than truncating bars."
+    },
+    {
+      "id": "tufte-3",
+      "principle": "Maximize the data-ink ratio: remove any ink that does not present or clarify data.",
+      "applies_when": "every static chart, especially those carrying gridlines, borders, backgrounds, tick marks, or redundant legends",
+      "check": {
+        "type": "deterministic",
+        "detail": "Data-ink ratio = data-ink / total-ink (The Visual Display of Quantitative Information, 1983). From SVG structure, count non-data decorative elements: chart border rects, background fills other than transparent/white, heavy or full-opacity gridlines, duplicate tick labels, drop shadows, gradients. Flag when decorative elements exceed data marks or when heavy gridlines/borders/backgrounds are present."
+      },
+      "severity": "medium",
+      "fix": "Delete chart borders and background fills; lighten gridlines to a faint gray or remove them; drop redundant tick marks and legends; erase non-data ink and erase redundant data ink."
+    },
+    {
+      "id": "tufte-4",
+      "principle": "Remove chartjunk: no moiré patterns, heavy grids, 3-D effects, gradients, or decorative graphics.",
+      "applies_when": "any chart, with elevated risk when the requested style is decorative, corporate, or 'infographic'",
+      "check": {
+        "type": "deterministic",
+        "detail": "Scan SVG/plan for chartjunk signatures: 3-D transforms or extruded/perspective shapes, cross-hatch or moiré fills (dense pattern fills), gradient or bevel filters, drop-shadow filters, clip-art or background imagery, ornamental frames. Flag any present."
+      },
+      "severity": "high",
+      "fix": "Replace patterned fills with flat single-tone fills; remove all 3-D, bevel, shadow, and gradient effects; delete decorative imagery so only data-bearing marks and minimal reference elements remain."
+    },
+    {
+      "id": "tufte-5",
+      "principle": "Label data directly at the mark instead of forcing a lookup through a separate legend.",
+      "applies_when": "line charts, scatter/bubble charts, and slope charts with a small number of series (roughly <= 8)",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan, count series and detect whether a separate legend element is the only key. Flag when series count is small enough to label in place (<= 8) but color/shape mapping is resolved only via a detached legend rather than labels attached to each series."
+      },
+      "severity": "medium",
+      "fix": "Attach each series label at the end of its line or beside its cluster, in the series color, and delete the standalone legend. Keep a legend only when series are too numerous or overlapping to label directly."
+    },
+    {
+      "id": "tufte-6",
+      "principle": "Integrate words, numbers, and graphics on the same surface rather than separating text into captions elsewhere.",
+      "applies_when": "explanatory figures where key values, causes, or events should be read alongside the marks",
+      "check": {
+        "type": "manual",
+        "detail": "Judge from the plan whether salient values and explanatory annotations are placed on the plotting surface (annotations, in-situ value labels, event markers) versus deferred entirely to an external caption or table. Flag figures that rely on separated caption text to explain what a well-placed on-graphic annotation could show."
+      },
+      "severity": "low",
+      "fix": "Move the one or two load-bearing explanations onto the graphic as annotations near the relevant marks, and label extreme or final values in place so the reader need not leave the plotting surface."
+    },
+    {
+      "id": "tufte-7",
+      "principle": "Use small multiples with identical scales and layout to show change across a third variable.",
+      "applies_when": "data with a category or time dimension beyond x and y, or a request to compare many series or slices",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/data, detect a third grouping dimension (many categories, time periods, or facets) currently crammed into one overplotted chart or an animation. Also verify that when small multiples ARE used, every panel shares identical x and y scales, axis ranges, and size. Flag overplotted single panels that should be faceted, and flag facet panels with inconsistent scales."
+      },
+      "severity": "medium",
+      "fix": "Split the third dimension into a grid of small multiples that share one common x-scale and one common y-scale, sorted meaningfully, so panels differ only by data. Fix any panel whose axis range or size diverges from the others."
+    },
+    {
+      "id": "tufte-8",
+      "principle": "Prefer high-accuracy perceptual encodings (position, then length) over low-accuracy ones (angle, area, volume) for quantitative comparison.",
+      "applies_when": "any request to compare magnitudes, especially proposals for pie charts, donut charts, 3-D charts, or bubble-only comparisons",
+      "check": {
+        "type": "deterministic",
+        "detail": "Apply the Cleveland & McGill (1984) accuracy ordering (six ranks, most to least accurate): (1) position along a common scale, (2) position along non-aligned scales, (3) length, direction, angle, (4) area, (5) volume, curvature, (6) shading, color saturation. Length, direction, and angle share one rank in the original results and are not separated hierarchically. From the plan, identify the primary quantitative encoding. Flag when magnitude comparison relies on angle (pie/donut), area or volume (bubble, 3-D), or color intensity while a position or length encoding was available."
+      },
+      "severity": "medium",
+      "fix": "Re-encode the comparison onto a position or length channel: replace pie/donut with a sorted bar or dot plot, replace 3-D and area-only comparisons with bars or dot plots on a common scale, and reserve area/color for secondary or geographic context."
+    },
+    {
+      "id": "tufte-9",
+      "principle": "State units and a clear quantitative scale on every value axis.",
+      "applies_when": "every chart with a quantitative axis or encoded numeric magnitude",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, confirm each quantitative axis has a title that names the measured quantity and its unit (e.g. 'Revenue (USD millions)') and that tick labels expose the scale. Flag axes with no unit, no title, or ambiguous magnitudes (unlabeled thousands/millions, undisclosed indices, or unstated log scaling)."
+      },
+      "severity": "medium",
+      "fix": "Add an axis title with explicit units, label ticks with their true magnitudes and suffixes, and disclose any transformation (log, index, per-capita) in the axis title or a note on the graphic."
+    },
+    {
+      "id": "tufte-10",
+      "principle": "Show data variation, not design variation: hold non-data visual properties constant across the chart.",
+      "applies_when": "any chart where color, width, texture, or baseline could vary for reasons unrelated to the data",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, detect encoding channels that vary without a corresponding data variable: multiple arbitrary series colors with no categorical meaning, inconsistent bar widths, shifting baselines between panels, or decorative per-mark styling. Flag variation in visual properties that does not map to a data field."
+      },
+      "severity": "low",
+      "fix": "Bind every varying visual property to a data field or hold it constant: use one neutral color unless color encodes a category, keep bar widths and baselines uniform, and remove per-mark styling that carries no information."
+    },
+    {
+      "id": "tufte-11",
+      "principle": "Use sparklines (small, intense, word-sized graphics) when a trend belongs inline within text, tables, or dense dashboards.",
+      "applies_when": "many series shown compactly, a value that needs its recent trend beside it, or trends embedded in running text or table rows",
+      "check": {
+        "type": "manual",
+        "detail": "Per Beautiful Evidence (2006), a sparkline is a small high-resolution graphic with no axes or gridlines, placed inline. Judge whether the context (table rows, KPI tiles, prose) calls for word-sized trend graphics rather than full framed charts. When sparklines are used, verify they omit axes/labels and keep a consistent scale across a comparable group."
+      },
+      "severity": "low",
+      "fix": "Render trends as axis-free, label-free word-sized lines placed next to the relevant number or in the table row, optionally marking the last point and the min/max, and keep the vertical scale consistent across sparklines that are meant to be compared."
+    },
+    {
+      "id": "tufte-12",
+      "principle": "Avoid over-encoding: do not use more dimensions in the graphic than exist in the data.",
+      "applies_when": "proposals for 3-D charts, dual encodings of the same variable, or shapes whose area/volume scales a one-dimensional quantity",
+      "check": {
+        "type": "deterministic",
+        "detail": "Compare the count of visual encoding dimensions (x, y, size, depth, color) to the count of data variables mapped. Flag when a single 1-D quantity is shown through a 2-D area or 3-D volume, when a 3-D depth axis carries no data, or when the same variable is redundantly encoded on two channels for effect."
+      },
+      "severity": "high",
+      "fix": "Reduce the graphic to the dimensionality of the data: drop the depth axis, scale 1-D quantities by length or area-proportional-to-value (not radius or volume), and remove redundant double encodings."
+    },
+    {
+      "id": "tufte-13",
+      "principle": "Provide a clear visual focal point so the reader's eye reaches the main comparison first.",
+      "applies_when": "charts with a headline message, a highlighted series, or a key data point among many",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered pixels, assess whether the intended focal element (highlighted series, annotated point, ranked leader) is visually dominant, or whether uniform styling and clutter leave no clear entry point. Flag when nothing stands out or when decoration competes with the data for attention."
+      },
+      "severity": "low",
+      "fix": "Mute non-focal marks to a light gray, give the focal series full-contrast color and a direct label, and place the key annotation near it so the primary comparison is the first thing seen."
+    },
+    {
+      "id": "tufte-14",
+      "principle": "Do not let annotations, labels, or marks overlap in ways that obscure the data.",
+      "applies_when": "dense scatter plots, many-series line charts, and figures with in-place labels or annotations",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, look for collisions: labels overlapping each other or the marks they describe, annotation text crossing lines, tick labels colliding, and marks so overplotted that individual values are unreadable. Flag any overlap that hides a data mark or its label."
+      },
+      "severity": "medium",
+      "fix": "Reposition or leader-line the colliding labels, reduce or rotate tick labels, add transparency or jitter to overplotted marks, and where density remains high switch to small multiples or a binned/aggregated view."
+    }
+  ]
+}

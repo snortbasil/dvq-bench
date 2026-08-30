@@ -1,0 +1,125 @@
+{
+  "family": "uncertainty",
+  "tasks": [
+    {
+      "id": "unc-1",
+      "intent": "Show me US real GDP growth forecasts for the next few years with the range of uncertainty around each year's estimate, not just the point forecast.",
+      "domain": "economics",
+      "data": {
+        "provider": "FRED",
+        "description": "Survey of Professional Forecasters projections of US annual real GDP growth, giving a central estimate plus the 10th/25th/75th/90th percentile of forecaster views for each projection year.",
+        "shape": "1 series x ~5 forecast years, each with a central estimate and a symmetric-ish quantile band",
+        "identifier": "GDPC1 (with SPF percentile projections)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line with a graduated confidence band (fan chart), central estimate as a line and nested percentile ranges as translucent bands of increasing lightness",
+        "key_insight": "The point forecast is modest and roughly flat, but the fan widens sharply with horizon: near-term growth is bounded tightly while the outer years admit outcomes from mild recession to boom, so the honest story is escalating uncertainty rather than a confident path."
+      },
+      "failure_modes": [
+        "Plotting only the central estimate as a single clean line and dropping the percentile bands entirely, presenting a false precision that hides the entire point of the request (Cairo: the graphic must show what the data does not know).",
+        "Drawing the uncertainty as discrete error-bar whiskers at each year rather than a continuous band, breaking the Gestalt continuity that lets the reader see uncertainty compounding smoothly across the horizon.",
+        "Rendering the nested percentile ranges in saturated rainbow fills instead of a single hue graded by lightness, so band color reads as an unordered categorical key when it actually encodes an ordered probability mass (color: lightness, not hue, carries the ordinal confidence level).",
+        "Truncating the y-axis to frame only the central estimates so the widening band is clipped at the panel edge, amputating the outer-percentile outcomes that are the message (Tufte lie factor).",
+        "Filling the outermost band as opaquely as the innermost so the visual weight is uniform, defeating the graded-lightness cue that should make the most-probable core read as denser than the tails (Ware: encode probability density with perceived opacity)."
+      ],
+      "applicable_rules": ["chart-selection", "cairo", "color", "tufte", "ware", "gestalt"]
+    },
+    {
+      "id": "unc-2",
+      "intent": "Compare vaccine efficacy across a handful of COVID vaccines showing the efficacy estimate and its 95% confidence interval for each, so I can see which differences are actually distinguishable.",
+      "domain": "health",
+      "data": {
+        "provider": "WHO",
+        "description": "Reported phase-3 primary-endpoint efficacy against symptomatic disease for several authorized COVID-19 vaccines, each with a point estimate and a 95% confidence interval from the trial.",
+        "shape": "~7 vaccines x 1 quantitative estimate each, with a lower and upper CI bound",
+        "identifier": null,
+        "fetchable": false
+      },
+      "expected": {
+        "chart_family": "horizontal dot-and-whisker (interval) plot, one row per vaccine, sorted by point estimate, with confidence intervals drawn as whiskers",
+        "key_insight": "Vaccines with non-overlapping intervals are genuinely distinguishable while those whose intervals overlap heavily are not; ranking by point estimate alone would overstate small, statistically indistinguishable gaps, and wide intervals flag small or noisier trials."
+      },
+      "failure_modes": [
+        "Drawing efficacy as plain bars with no interval at all, forcing an area/length read of a point estimate and erasing the sampling uncertainty that determines whether any ranking is real (Cleveland & McGill; Cairo).",
+        "Leaving the vaccines in alphabetical or data-file order rather than sorting by point estimate, so the reader cannot perceive the ranking the intervals are meant to qualify (ordering principle for comparison).",
+        "Adding bars behind the dots that begin at a non-zero baseline, so bar length exaggerates efficacy differences while the whiskers quietly contradict the bar heights (Tufte lie factor).",
+        "Encoding each vaccine's whisker in a different saturated hue as if color carried meaning, when the vaccines are nominal and the only quantitative channels are position and interval length (color: no hue scale for nominal rows).",
+        "Using whisker caps and dots so visually heavy that overlapping intervals blur into one another, destroying the figure-ground separation needed to judge which intervals actually overlap (Ware; Gestalt)."
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "tufte", "color", "cairo", "gestalt", "ware"]
+    },
+    {
+      "id": "unc-3",
+      "intent": "Plot the projected global mean surface temperature rise through 2100 under one emissions scenario, showing the model spread so readers see the range and not just the central projection.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "CMIP/IPCC projected global surface temperature anomaly relative to pre-industrial for a single SSP scenario, given as a multi-model mean with a likely-range envelope (e.g. 5th-95th percentile) by year.",
+        "shape": "1 scenario x ~80 projection years, each with a central value and a likely-range band",
+        "identifier": "temperature-anomaly (projected, SSP scenario)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line with a shaded uncertainty band (central projection plus a translucent likely-range envelope that widens over the century)",
+        "key_insight": "The central line rises steadily, but the model spread fans out with time so that by 2100 the likely range spans well over a degree; the responsible read is a band of plausible futures, and stating the scenario is essential because the band is conditional on it."
+      },
+      "failure_modes": [
+        "Showing only the multi-model mean line and omitting the envelope, implying a single deterministic future and hiding the inter-model spread that is the requested content (Cairo: do not present projection as certainty).",
+        "Overlaying several scenarios' bands in overlapping saturated fills so the envelopes muddy into an unreadable wash, when the ask is one scenario cleanly shown (Ware: overlapping translucency destroys the density cue).",
+        "Coloring the band with a red-to-blue diverging ramp keyed to temperature, implying a meaningful midpoint on the fill channel that carries no such value here, competing with the real position encoding (color).",
+        "Truncating the y-axis well above zero and stretching the panel so the central slope reads as a vertical cliff, inflating the apparent rate (Tufte lie factor).",
+        "Failing to label the scenario and the band's percentile definition, leaving the envelope's meaning ambiguous and the whole figure uninterpretable (Cairo; typography: quantitative annotations must be explicit)."
+      ],
+      "applicable_rules": ["chart-selection", "cairo", "color", "tufte", "ware", "typography"]
+    },
+    {
+      "id": "unc-4",
+      "intent": "Show median household income by US state with the margin of error on each estimate, so I can see which state-to-state differences are real and which are within sampling noise.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "American Community Survey 1-year median household income by state, each estimate published with a 90% margin of error.",
+        "shape": "~51 states x 1 quantitative estimate each, with a margin of error",
+        "identifier": "B19013 (ACS median household income, with MOE)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal dot-and-whisker (interval) plot, one row per state, sorted by estimate, with the margin of error drawn as a whisker",
+        "key_insight": "States near each other in the ranking have overlapping margins and are not reliably distinguishable, so the apparent fine-grained ordering is partly noise; only the gap between the top and bottom clusters is clearly real, and small states carry visibly wider intervals."
+      },
+      "failure_modes": [
+        "Rendering the estimates as a choropleth map with a single fill per state and no way to show the margin of error, which answers 'where' but cannot express uncertainty and lets large low-income states dominate the visual over small ones (chart-selection; Cairo).",
+        "Drawing bars from a non-zero baseline with no error whiskers, so tiny truncation-inflated gaps between adjacent states read as decisive when they are within the margin of error (Tufte lie factor; Cleveland & McGill).",
+        "Leaving states in alphabetical order rather than sorting by estimate, so the reader cannot see the ranking the margins are meant to qualify (ordering principle).",
+        "Binning income into a sequential rainbow palette whose perceived lightness is non-monotonic, so the color scale reads as a false ordinal ladder that fights the position encoding (color).",
+        "Making the whiskers too faint or too short relative to marker size to judge overlap, defeating the single purpose of plotting the margin of error (Ware; Gestalt figure-ground)."
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "tufte", "color", "cairo", "ware", "gestalt"]
+    },
+    {
+      "id": "unc-5",
+      "intent": "Show OECD PISA average math scores for a set of countries with each country's confidence interval, so I can tell which countries are actually ahead of which rather than reading a spurious league table.",
+      "domain": "education",
+      "data": {
+        "provider": "OECD (via Our World in Data)",
+        "description": "PISA mean mathematics score by country for the most recent cycle, each reported with a standard error from which a 95% confidence interval is derived.",
+        "shape": "~12 countries x 1 quantitative mean each, with a standard error / confidence interval",
+        "identifier": "pisa-math-score",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal dot-and-whisker (interval) plot, countries sorted by mean score, confidence intervals shown as whiskers",
+        "key_insight": "Countries clustered within a few points share overlapping intervals and cannot be reliably rank-ordered, so the familiar PISA league table overstates precision; only clearly separated tiers of countries are genuinely distinguishable."
+      },
+      "failure_modes": [
+        "Presenting the scores as a ranked bar chart with no intervals, manufacturing a precise league table from means whose confidence intervals overlap and thereby endorsing distinctions the data cannot support (Cairo; the canonical PISA-ranking abuse).",
+        "Truncating the score axis to a narrow window around the means so a handful of indistinguishable points spread across the full panel width, visually magnifying differences that lie within the intervals (Tufte lie factor).",
+        "Sorting countries alphabetically instead of by score, so the tiers the intervals reveal cannot be read off the figure (ordering principle for comparison).",
+        "Assigning each country a distinct saturated hue as if color were informative, when the rows are nominal and only position and interval length carry meaning, adding chartjunk that competes with the data (color; Tufte).",
+        "Drawing overlapping whiskers at a weight and density that blur adjacent intervals together, so the reader cannot see which pairs actually overlap, defeating the comparison the chart exists to enable (Ware; Gestalt figure-ground)."
+      ],
+      "applicable_rules": ["chart-selection", "cairo", "tufte", "color", "ware", "gestalt"]
+    }
+  ]
+}

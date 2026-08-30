@@ -1,0 +1,169 @@
+{
+  "source": "typography",
+  "meta": {
+    "citations": [
+      "Edward R. Tufte, The Visual Display of Quantitative Information (Graphics Press, 1983; 2nd ed. 2001) — data-ink ratio, chartjunk, integration of words/numbers/graphics, direct labeling.",
+      "Colin Ware, Information Visualization: Perception for Design (Morgan Kaufmann, 1st ed. 2000, 3rd ed. 2012) — perceptual limits on legibility, visual angle, minimum glyph size.",
+      "Richard Brath, Visualizing with Text (CRC Press, 2020) and 'Which Font Should I Use in My Visualization?' (2020) — high x-height humanist sans for small labels; caution on geometric/condensed widths.",
+      "Microsoft Typography, OpenType spec features_pt (tnum/pnum); Fonts.com/Monotype 'Proportional vs. Tabular Figures' — tabular figures share a uniform advance width for column alignment; proportional figures use natural per-digit width for running text."
+    ],
+    "history": "Old-style (text) figures belong to the 16th-century Renaissance tradition of Claude Garamond (active c. 1530-1561). Three-quarter-height lining figures were introduced to European typography in 1788, when Richard Austin cut a new font for typefounder and publisher John Bell (the Bell typeface). Tabular-vs-proportional and lining-vs-old-style are two orthogonal axes yielding four figure sets.",
+    "note": "Type in a figure is a data channel, not decoration: it carries labels, scales, annotations, and titles. Verified facts: Bell typeface / three-quarter lining figures = 1788 (Richard Austin for John Bell); tnum = tabular, pnum = proportional (OpenType)."
+  },
+  "rules": [
+    {
+      "id": "typography-1",
+      "principle": "Label each series directly at its mark instead of routing the reader through a detached legend.",
+      "applies_when": "line, slope, area, or scatter charts with a small number of series (roughly <= 8) currently keyed only by a separate legend",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan, count series and detect whether the color/shape mapping is resolved only by a standalone legend element. Flag when series count <= 8 but no label is attached at the end of each line, beside each cluster, or on each point. A detached legend forces repeated saccades plus a working-memory lookup; a co-located label resolves in one fixation (Tufte, 1983)."
+      },
+      "severity": "medium",
+      "fix": "Attach each series name at the end of its line or beside its mark in that series' color and delete the standalone legend; keep a legend only when direct labels would unavoidably collide (dense multi-series, or small multiples sharing one key)."
+    },
+    {
+      "id": "typography-2",
+      "principle": "Use tabular lining figures wherever numbers must align vertically in a column.",
+      "applies_when": "vertical-axis tick values, data tables, or stacked value labels where digits should line up for length comparison",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, detect numeric text in a vertical column (axis ticks on a y-scale, table cells, aligned value labels). Confirm the OpenType 'tnum' feature (font-variant-numeric: tabular-nums) is enabled and figures are lining, not old-style. Tabular figures share one fixed advance width so digits stack into clean columns. Flag columns rendered with proportional or old-style figures."
+      },
+      "severity": "medium",
+      "fix": "Enable tabular lining figures (tnum + lnum, or font-variant-numeric: tabular-nums lining-nums) on axis tick labels, tables, and aligned value labels, and align decimal points so magnitudes compare by length."
+    },
+    {
+      "id": "typography-3",
+      "principle": "Use proportional figures for numbers embedded in running prose, titles, and annotation sentences.",
+      "applies_when": "numerals appear inside a sentence — chart title, caption, or annotation text — rather than in a numeric column",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, detect numerals inside prose text runs (title, caption, annotation). Flag when tabular figures ('tnum') are forced there, which produces gappy spacing (a '1' padded to a '0' width) inside words. Proportional figures ('pnum') give each digit its natural width for even color in a line of text."
+      },
+      "severity": "low",
+      "fix": "Set numerals inside prose with proportional figures (font-variant-numeric: proportional-nums, or leave tnum off); reserve tabular figures for columns only."
+    },
+    {
+      "id": "typography-4",
+      "principle": "Prefer a typeface with a tall x-height and open apertures for all in-figure text.",
+      "applies_when": "any figure with labels, ticks, or annotations set at small size (roughly 8-11 pt print equivalent)",
+      "check": {
+        "type": "manual",
+        "detail": "Judge whether the chosen figure font is a high-x-height humanist sans (e.g. Source Sans, Open Sans, Roboto, Segoe) versus a tight geometric or condensed face whose counters fill in and glyphs run wide at small size. Requires knowing the font's design; per Ware, foveal acuity and the visual angle a glyph subtends set the floor on usable label size (Brath, 2020)."
+      },
+      "severity": "low",
+      "fix": "Switch in-figure text to a high-x-height humanist sans with open apertures; avoid geometric or condensed faces for labels at small size."
+    },
+    {
+      "id": "typography-5",
+      "principle": "Hold the figure to one type family, two at most, and make any second family a deliberate contrast.",
+      "applies_when": "any figure that sets title, axis labels, and annotations",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, count distinct font families across all text elements. Flag when more than two families appear. When exactly two are used, verify the pairing is a hard contrast (e.g. serif title against sans labels) that reads as intentional hierarchy rather than a near-duplicate."
+      },
+      "severity": "medium",
+      "fix": "Collapse to a single well-chosen family across title, axis, and annotation; if a second family is kept, make it a clear serif-vs-sans contrast tied to a hierarchy level."
+    },
+    {
+      "id": "typography-6",
+      "principle": "Build type hierarchy with a few clearly-stepped sizes and weights, not many arbitrary sizes.",
+      "applies_when": "any figure with a title, data/axis labels, and a source or caption",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, enumerate distinct font sizes and weights across text roles. Expect about three levels (title > axis/data labels > source/caption) with each step perceptibly different (roughly a 1.2-1.5x size ratio). Flag more than ~4 distinct sizes, or adjacent levels whose sizes differ by less than ~1.15x (ambiguous ordering)."
+      },
+      "severity": "medium",
+      "fix": "Reduce to three hierarchy levels with a consistent ~1.2-1.5x size ratio between them, using weight sparingly to reinforce (not replace) the size steps."
+    },
+    {
+      "id": "typography-7",
+      "principle": "De-emphasize structural type (axis titles, tick labels, gridline numbers) so data marks dominate the visual field.",
+      "applies_when": "any chart where axis and tick text is set at full black or heavy weight",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, read the fill and weight of axis titles, tick labels, and gridline numbers. Flag when scaffolding text is pure black (#000) or bold while the data marks are not correspondingly dominant. This is the data-ink principle applied to type: non-data text is necessary but must not compete (Tufte, 1983)."
+      },
+      "severity": "medium",
+      "fix": "Set axis titles, tick labels, and gridline numbers in a medium gray at normal weight so they recede behind the data; reserve full contrast and weight for the data marks and the focal annotation."
+    },
+    {
+      "id": "typography-8",
+      "principle": "Give the title a declarative role that states the finding, not just the variables.",
+      "applies_when": "any explanatory or presentation figure with a single main message",
+      "check": {
+        "type": "manual",
+        "detail": "Read the title text in the plan. Flag generic descriptive titles that name only the axes ('Emissions over time', 'Figure 3', 'Revenue by quarter') when the figure carries a clear finding. A declarative title states the message ('Emissions fell after 2015'). Requires judging the figure's intended takeaway."
+      },
+      "severity": "medium",
+      "fix": "Rewrite the title as a short declarative sentence stating the finding, set it at the largest hierarchy level, and move variable/axis naming to the axis titles or caption."
+    },
+    {
+      "id": "typography-9",
+      "principle": "Give the caption an explanatory role (units, definitions, sample size, source) at the smallest, muted level.",
+      "applies_when": "any publication-quality figure that needs units, definitions, sample size, or a source credit",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, confirm a caption/source text exists at the smallest, lowest-contrast hierarchy level, distinct from the title and data labels. Flag when source/footnote text is set at the same size or weight as data labels (competing for attention), or when required units/source are absent."
+      },
+      "severity": "low",
+      "fix": "Place definitions, units, sample size, and source in a caption set at the smallest muted level, clearly below the data labels in the hierarchy so each role is found instantly."
+    },
+    {
+      "id": "typography-10",
+      "principle": "State units once (in the axis title or a corner), not repeated on every tick label.",
+      "applies_when": "a quantitative axis whose ticks carry a currency, percent, or unit suffix",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, inspect tick labels on each quantitative axis. Flag when a unit or currency symbol ('$', '%', 'M') is repeated on every tick instead of stated once in the axis title or a single corner. Also verify significant-digit count is consistent within a column."
+      },
+      "severity": "low",
+      "fix": "Move the unit into the axis title (e.g. 'Median household income, 2024 dollars') or a single corner label, strip the repeated suffix from ticks, and keep decimal places uniform down the column."
+    },
+    {
+      "id": "typography-11",
+      "principle": "Do not set figure text in all caps for anything longer than a short label.",
+      "applies_when": "titles, captions, annotations, or multi-word labels rendered in uppercase",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, detect text runs set in all caps (text-transform: uppercase or uppercase source strings) longer than a short label (more than ~2-3 words). All caps removes ascender/descender word-shape cues and slows reading. Flag long uppercase runs; short axis titles or category headers may use caps if tracked."
+      },
+      "severity": "low",
+      "fix": "Set titles, captions, and annotations in sentence case; reserve all caps for short axis titles or category headers only, and add letter-spacing (tracking) when caps are used."
+    },
+    {
+      "id": "typography-12",
+      "principle": "Keep annotation text horizontal and integrated with the mark it explains; avoid rotated or stacked tick labels.",
+      "applies_when": "figures with in-place annotations, or category axes whose labels are long enough to tempt rotation",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, detect text rotated off horizontal (transform rotate on tick or annotation text, e.g. 45 or 90 degrees) other than the vertical-axis title. Flag rotated/stacked category tick labels and floating rotated callouts; rotated text costs reading time. Annotations should sit adjacent to or point at their mark."
+      },
+      "severity": "medium",
+      "fix": "Place annotations horizontally next to the relevant mark with a subtle leader line; when category names are long, rotate the chart to horizontal bars rather than rotating the text, using angled labels only as a last resort."
+    },
+    {
+      "id": "typography-13",
+      "principle": "Keep in-figure text above the minimum legible size and above contrast minimums against its background.",
+      "applies_when": "any figure text, especially small tick labels, annotations, or source lines",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the plan/SVG, read each text element's font size and its fill vs background. Flag text below roughly 8 pt at print scale or about 11-12 px on screen, and flag foreground/background pairs (e.g. light-gray labels on white) below WCAG contrast minimums (4.5:1 for body text, 3:1 for large text). Ware's perceptual limits set the size floor."
+      },
+      "severity": "medium",
+      "fix": "Raise undersized text to at least ~8 pt print / ~12 px screen and darken low-contrast labels until they meet 4.5:1 (text) or 3:1 (large text) against their background."
+    },
+    {
+      "id": "typography-14",
+      "principle": "Let words live on the graphic so the figure is self-contained when extracted.",
+      "applies_when": "explanatory figures whose key values, scale notes, or source would otherwise be offloaded entirely to surrounding body text",
+      "check": {
+        "type": "manual",
+        "detail": "Judge whether the load-bearing explanation (the finding, key values, scale note, source) is placed on the plotting surface versus deferred entirely to an external caption block or body prose. Flag figures that would be unreadable or unattributed once lifted out of their document (Tufte, 1983)."
+      },
+      "severity": "low",
+      "fix": "Move the one or two load-bearing explanations and the source onto the figure frame as annotations and an in-figure caption so the figure stands alone when extracted."
+    }
+  ]
+}

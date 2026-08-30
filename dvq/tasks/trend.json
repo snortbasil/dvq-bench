@@ -1,0 +1,124 @@
+{
+  "family": "trend",
+  "tasks": [
+    {
+      "id": "tre-1",
+      "intent": "Show how atmospheric CO2 concentration has risen since the Mauna Loa record began in 1958.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Monthly mean atmospheric CO2 concentration measured at Mauna Loa Observatory (Keeling Curve), in parts per million.",
+        "shape": "1 series x ~66 years (monthly, ~790 points)",
+        "identifier": "co2-concentration-long-term",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line",
+        "key_insight": "A single accelerating upward line: the roughly linear-to-superlinear rise from ~315 ppm in 1958 to ~420 ppm today, with the fine seasonal sawtooth legible when the series is not over-smoothed."
+      },
+      "failure_modes": [
+        "Truncating the y-axis to start at ~300 ppm rather than 0 is defensible here, but a weak answer instead inflates the slope by cropping to 400-420 ppm on a tall panel, converting a real but gradual rise into a false cliff (Tufte lie factor).",
+        "Filling the area under the curve down to a zero baseline forces an enormous empty band and encodes the quantity as area rather than position, degrading the highest-accuracy perceptual channel (Cleveland & McGill).",
+        "Rendering monthly points as a scatter of markers instead of a connected line breaks the Gestalt principle of continuity that makes a trend read as one trajectory.",
+        "Aggregating to annual means silently discards the seasonal sawtooth, erasing a real signal the data carries (Tufte: show the data at its native resolution)."
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "chart-selection", "gestalt", "cairo"]
+    },
+    {
+      "id": "tre-2",
+      "intent": "Chart US unemployment rate from 1948 to today so the recessions stand out.",
+      "domain": "economics",
+      "data": {
+        "provider": "FRED",
+        "description": "US civilian unemployment rate, seasonally adjusted, monthly, from the Bureau of Labor Statistics.",
+        "shape": "1 series x ~77 years (monthly)",
+        "identifier": "UNRATE",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line",
+        "key_insight": "The jagged cyclical series with sharp recession spikes (notably the near-vertical 2020 COVID spike to ~14.7%) against a lower structural baseline, with recession periods contextualized rather than implied."
+      },
+      "failure_modes": [
+        "Using a bar per month turns a continuous rate into hundreds of bars, inviting part-to-whole reading of a stock quantity and destroying the continuity that makes cyclicality visible (chart-selection: bars are for discrete magnitudes, not dense time series).",
+        "Plotting on a y-axis that starts above zero exaggerates the amplitude of every cycle, breaking the honest-baseline expectation for a rate (Tufte lie factor).",
+        "Shading recessions with saturated red bands that compete with the data line for figural dominance, so the annotation layer overwhelms the signal (Ware: pre-attentive salience budget).",
+        "Smoothing with a wide moving average that clips the 2020 spike, hiding the single most important event in the series (Cairo: the graphic must not hide what the data shows).",
+        "Coloring the single line with a rainbow gradient along its length, implying an ordered variable that does not exist (color: hue is not for a lone quantitative series)."
+      ],
+      "applicable_rules": ["chart-selection", "tufte", "ware", "cairo", "color"]
+    },
+    {
+      "id": "tre-3",
+      "intent": "Compare life expectancy at birth over time for the US, Japan, Germany, and India on one figure.",
+      "domain": "health",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Period life expectancy at birth, in years, by country and year (World Bank / UN sources).",
+        "shape": "4 series x ~60 years",
+        "identifier": "life-expectancy",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line",
+        "key_insight": "Four converging trajectories: India starting far below and closing much of the gap, Japan overtaking the US after the 1980s, and the US flatlining in the last decade — legible only if the four lines are directly labeled and perceptually separable."
+      },
+      "failure_modes": [
+        "Stacking the four countries as a stacked area, which makes each country's own trend unreadable because every band sits on the shifting top of the one below it (Cleveland & McGill: judging position along a non-aligned baseline is far less accurate than a common baseline).",
+        "Encoding the four countries with a rainbow/hue-cycled palette that has no perceptual ordering and fails for red-green colorblind readers, instead of a categorical colorblind-safe set (color: qualitative palette for nominal series).",
+        "Relegating country identity to a separate legend the eye must round-trip to, rather than labeling each line at its endpoint (Tufte: minimize the eye's lookups; Gestalt proximity).",
+        "Truncating the y-axis to 60-85 years to fill the panel, magnifying small differences and distorting the true convergence (Tufte lie factor).",
+        "Using four different dashed line styles at similar weight so the series are hard to trace where they cross, defeating Gestalt continuity."
+      ],
+      "applicable_rules": ["cleveland-mcgill", "color", "tufte", "gestalt", "chart-selection"]
+    },
+    {
+      "id": "tre-4",
+      "intent": "Show the shift in US electricity generation by source over the past two decades, highlighting the rise of renewables and the decline of coal.",
+      "domain": "energy",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Annual US electricity generation by source (coal, gas, nuclear, hydro, wind, solar, oil), in terawatt-hours.",
+        "shape": "7 series x ~25 years",
+        "identifier": "electricity-prod-source-stacked",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "small-multiple",
+        "key_insight": "Coal's steep decline, gas overtaking it, and wind and solar climbing from near zero — cleanest as a small-multiple panel of one line per source on shared axes, or a well-ordered stacked area if the composition-of-total question dominates."
+      },
+      "failure_modes": [
+        "Cramming all seven sources as overlapping lines in one frame (a spaghetti chart) so no individual trajectory can be traced (Gestalt: too many competing continuities defeat figure-ground).",
+        "Choosing a stacked area but leaving bands in arbitrary rather than magnitude-sorted order, so the reader cannot judge any middle band whose baseline wobbles (Cleveland & McGill: unaligned baselines are read poorly).",
+        "Giving the seven sources a rainbow palette instead of a categorical scheme with a hue reserved to spotlight the coal-versus-renewables story (color / Ware: salience should follow the intended message).",
+        "Independent y-axis scales across small-multiple panels, which visually equalizes a source producing 800 TWh with one producing 50 TWh and destroys cross-panel comparison (Tufte: small multiples require a shared scale).",
+        "Adding a filled 3D perspective to the stack, whose depth cue biases the read of the nearer bands (Tufte chartjunk / Cleveland: 3D degrades magnitude judgment)."
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "gestalt", "color", "chart-selection"]
+    },
+    {
+      "id": "tre-5",
+      "intent": "Show the change in the US median age from 2000 to today to illustrate the aging population.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Median age of the US resident population, in years, by year (American Community Survey / decennial census).",
+        "shape": "1 series x ~24 years (annual)",
+        "identifier": "ACS median age (B01002)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "line",
+        "key_insight": "A steady, nearly monotonic climb of roughly 3 years (from ~35 to ~38.9), a small absolute change whose demographic significance must be conveyed without visually exaggerating the slope."
+      },
+      "failure_modes": [
+        "Truncating the y-axis to 35-39 years on a tall panel so a 4-year rise looks like a doubling, the textbook honest-baseline violation for a small-magnitude trend (Tufte lie factor).",
+        "Filling the area to a zero baseline, which correctly avoids exaggeration but wastes the panel on empty space and mis-encodes a position quantity as area (chart-selection: single continuous series wants a line, not area, when the change is small relative to the level).",
+        "Rendering 24 annual values as a bar chart, inviting part-to-whole comparison of a level variable and breaking the continuity that reads as aging over time (chart-selection).",
+        "Over-fitting a smooth spline that invents inflection points the annual data does not support (Cairo: do not draw structure the data lacks).",
+        "Setting axis and title type in a decorative or condensed display face at low contrast, so the one number that matters is hard to read (typography: legibility of quantitative labels)."
+      ],
+      "applicable_rules": ["tufte", "chart-selection", "cairo", "cleveland-mcgill", "typography"]
+    }
+  ]
+}

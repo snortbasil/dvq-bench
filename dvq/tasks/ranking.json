@@ -1,0 +1,125 @@
+{
+  "family": "ranking",
+  "tasks": [
+    {
+      "id": "ran-1",
+      "intent": "Show me the 15 countries with the highest CO2 emissions per capita in 2022 so I can see who the biggest per-person emitters are.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Annual production-based CO2 emissions per capita by country, in tonnes per person, filtered to the single most recent complete year (2022) and reduced to the top 15 sovereign countries (excluding aggregates like 'World', 'Asia', and 'International transport').",
+        "shape": "15 categories x 1 quantitative",
+        "identifier": "co2-emissions-per-capita",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal bar chart, sorted descending by value",
+        "key_insight": "Small petrostates (Qatar, Kuwait, UAE, Bahrain) dominate per-capita emissions far above large industrial economies, an ordering that is invisible in the more familiar total-emissions ranking."
+      },
+      "failure_modes": [
+        "bars sorted alphabetically by country name rather than by emissions value, destroying the ranking the request explicitly asks for (Cleveland & McGill: position-along-a-common-scale judgments are only useful when the encoding is ordered by the quantity)",
+        "vertical bars with long country names rotated 90 degrees or truncated, forcing the reader to tilt their head and degrading label legibility (Tufte / Bertin: labels should be horizontally readable)",
+        "a rainbow or per-country categorical hue palette applied to a single quantitative measure, implying category distinctions that do not exist and adding chartjunk (color rules: use a single hue or an ordered ramp for one quantitative variable)",
+        "y-axis (value axis) not starting at zero, so bar length no longer encodes magnitude proportionally and small differences between petrostates are visually exaggerated (Tufte: the lie factor of a truncated bar baseline)",
+        "including OWID regional aggregates ('World', 'Asia', 'Upper-middle-income countries') alongside sovereign countries, mixing incommensurable units of analysis in one ranking"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "bertin", "chart-selection", "color"]
+    },
+    {
+      "id": "ran-2",
+      "intent": "Which US states have the highest median household income? Rank them for me.",
+      "domain": "economics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Median household income in inflation-adjusted dollars for all 50 US states plus DC, from the American Community Survey 1-year estimates (most recent release), with margins of error available per estimate.",
+        "shape": "51 categories x 1 quantitative (plus margin of error)",
+        "identifier": "ACS B19013 (median household income)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal bar chart or dot plot, sorted descending; a Cleveland dot plot is preferable at 51 rows for compactness and for showing error bars",
+        "key_insight": "A tight cluster of Northeast and Mid-Atlantic states (Maryland, Massachusetts, New Jersey) plus DC leads, and the top-to-bottom spread is smaller than a truncated axis would suggest; many adjacent states are statistically indistinguishable given their margins of error."
+      },
+      "failure_modes": [
+        "rendering 51 states as a pie or donut chart, forcing angle/area comparisons that Cleveland & McGill rank as the least accurate perceptual judgments, and making rank order nearly unreadable",
+        "value axis truncated to start near the minimum income (e.g. $50k) rather than zero, inflating the apparent gap between top and bottom states (Tufte: lie factor)",
+        "omitting margins of error entirely so that statistically tied ranks (states within each other's confidence intervals) are presented as a firm ordering, overstating precision (Cairo: honesty about uncertainty)",
+        "a saturated red-to-green diverging palette mapped onto income when the data has no meaningful zero-crossing midpoint, misusing a diverging scheme for sequential data (color rules)",
+        "3D bars or drop shadows that add ink without encoding data and distort length judgments (Tufte: chartjunk, data-ink ratio)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "cairo", "color", "chart-selection"]
+    },
+    {
+      "id": "ran-3",
+      "intent": "Rank the leading causes of death globally so I can see what kills the most people.",
+      "domain": "health",
+      "data": {
+        "provider": "WHO",
+        "description": "Global deaths by cause for the most recent year in the WHO Global Health Estimates, aggregated to the top 10 individual causes (e.g. ischaemic heart disease, stroke, COPD, lower respiratory infections), in absolute number of deaths.",
+        "shape": "10 categories x 1 quantitative",
+        "identifier": "WHO GHE leading causes of death",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal bar chart, sorted descending by number of deaths",
+        "key_insight": "Ischaemic heart disease and stroke together account for a strikingly large share of global mortality, dwarfing infectious causes; the steep drop after the top two is the story a good ranking reveals."
+      },
+      "failure_modes": [
+        "a treemap or bubble chart that encodes death counts by area, which Cleveland & McGill and Bertin show is judged far less accurately than length, so the reader cannot reliably tell the 3rd cause from the 5th",
+        "unsorted bars left in the source table's arbitrary order, so the 'leading' framing the user asked for is not visible at a glance (chart-selection: sorting is the ranking)",
+        "an alarming all-red or fiery palette applied for emotional effect rather than to encode any variable, biasing interpretation of a neutral count (color / Cairo: avoid gratuitous emotional coloring of data)",
+        "grouping heterogeneous WHO cause categories inconsistently (mixing a broad group like 'cancers' with a narrow one like 'stroke') so the ranking compares non-comparable buckets",
+        "value axis not anchored at zero, distorting the proportional length that makes the top-two dominance legible (Tufte: bar baseline)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "bertin", "tufte", "cairo", "chart-selection", "color"]
+    },
+    {
+      "id": "ran-4",
+      "intent": "Compare the share of adults with a bachelor's degree or higher across OECD countries and rank them.",
+      "domain": "education",
+      "data": {
+        "provider": "OECD (Education at a Glance) / World Bank",
+        "description": "Percentage of the population aged 25-64 that has attained tertiary education, for OECD member countries in the most recent survey year, as a share of the relevant age group.",
+        "shape": "38 categories x 1 quantitative (percentage)",
+        "identifier": "OECD EAG tertiary attainment 25-64",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal bar chart or Cleveland dot plot, sorted descending by attainment percentage, with the OECD average marked as a reference line",
+        "key_insight": "Korea, Canada, and Japan lead on tertiary attainment among younger-skewing populations, and most countries cluster within a moderate band around the OECD average rather than spreading uniformly."
+      },
+      "failure_modes": [
+        "encoding a bounded 0-100 percentage on an axis that starts above zero or is clipped at the data range, breaking the proportionality that lets bar length be read as share (Tufte: truncated baseline on a percentage)",
+        "a choropleth world map substituted for a ranking, which orders nothing and makes exact rank comparison impossible because area and position on a map carry no ordinal meaning (chart-selection: a map is not a ranking)",
+        "sequential color ramp applied redundantly to bars already sorted by length, double-encoding one variable and wasting the color channel that could carry the OECD-average reference (Bertin / color: avoid redundant encoding that crowds out useful signal)",
+        "omitting the OECD-average or comparison reference line, so the reader cannot judge which countries are above or below typical (Cairo: rankings need an anchor)",
+        "sorting bars by country name or GDP instead of by the attainment value being ranked, hiding the actual order requested"
+      ],
+      "applicable_rules": ["tufte", "chart-selection", "bertin", "color", "cairo", "cleveland-mcgill"]
+    },
+    {
+      "id": "ran-5",
+      "intent": "Which sources produce the most electricity worldwide? Rank generation by source for the latest year.",
+      "domain": "energy",
+      "data": {
+        "provider": "Our World in Data (Ember / Energy Institute)",
+        "description": "Global electricity generation by source in terawatt-hours for the most recent year, split into the main sources: coal, gas, hydro, nuclear, wind, solar, oil, bioenergy, and other renewables.",
+        "shape": "9 categories x 1 quantitative (TWh)",
+        "identifier": "electricity-generation (by source)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "horizontal bar chart, sorted descending by generation in TWh",
+        "key_insight": "Coal and gas still dominate absolute generation, while solar and wind, despite fast growth, remain well below fossil sources in total output; the ranking makes the current fossil lead unmistakable."
+      },
+      "failure_modes": [
+        "a stacked single bar or pie showing shares of a whole, which forces part-to-whole angle/length-along-a-shifting-baseline judgments and prevents clean rank comparison of the middle sources (Cleveland & McGill: stacked segments off a common baseline are hard to compare)",
+        "assigning conventional 'brand' colors (yellow for solar, black for coal, blue for gas) as a full categorical rainbow across a single quantitative ranking, adding hue noise where sort order already conveys everything (color: one quantitative variable needs at most one ordered hue)",
+        "bars unsorted or ordered by an editorial 'clean vs dirty' grouping rather than by TWh, so the magnitude ranking the user asked for is obscured (chart-selection: sort by the ranked quantity)",
+        "log-scaling the value axis without disclosure so the visual gap between coal and solar is compressed, understating the true fossil dominance the data shows (Tufte / Cairo: undisclosed log axis misleads on magnitude)",
+        "value axis not starting at zero, so bar length no longer maps linearly to terawatt-hours and cross-source magnitude comparison is corrupted (Tufte: bar baseline)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "color", "chart-selection", "cairo"]
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "source": "color",
+  "rules": [
+    {
+      "id": "color-1",
+      "principle": "Match the palette family to the data type: sequential for ordered magnitude, diverging for values around a meaningful midpoint, categorical for unordered groups.",
+      "applies_when": "any encoding maps a data field to color/fill",
+      "check": {
+        "type": "deterministic",
+        "detail": "Cross-check the color scale's interpolate/scheme against the encoded field's type in the plan: quantitative-ordered field must use a sequential scheme; a field with a natural zero/reference midpoint must use a diverging scheme; nominal field must use a categorical scheme. Flag mismatches (e.g. categorical scheme on a continuous field, or sequential scheme on nominal groups)."
+      },
+      "severity": "high",
+      "fix": "Swap the scheme to the family matching the field type: sequential (e.g. viridis, ColorBrewer Blues) for magnitude, diverging (e.g. RdBu, BrBG) for signed deviation from a midpoint, categorical (e.g. ColorBrewer Set2/Dark2, Tableau10) for groups."
+    },
+    {
+      "id": "color-2",
+      "principle": "For continuous data use a perceptually uniform colormap so equal data steps produce equal perceived color steps.",
+      "applies_when": "a continuous quantitative field is mapped to color (heatmap, choropleth, contour, density, filled surface)",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm the continuous color scale names a perceptually uniform colormap (viridis, cividis, plasma, inferno, magma) or a ColorBrewer sequential ramp. Flag any non-uniform ramp (jet, rainbow, hsv, gist_rainbow, custom multi-hue interpolation without a uniform basis)."
+      },
+      "severity": "high",
+      "fix": "Replace the colormap with viridis (general default) or cividis (maximally colorblind-safe); use plasma/inferno/magma when a different aesthetic is needed."
+    },
+    {
+      "id": "color-3",
+      "principle": "Never use rainbow or jet colormaps: their non-monotonic luminance creates false boundaries and hides real gradients.",
+      "applies_when": "a continuous field is mapped to color and the chosen scheme is a spectral rainbow",
+      "check": {
+        "type": "deterministic",
+        "detail": "String-match the scale scheme/interpolator against a blocklist (jet, rainbow, hsv, gist_rainbow, nipy_spectral, turbo used as a rainbow, Spectral used sequentially). Presence of any is a violation."
+      },
+      "severity": "high",
+      "fix": "Replace jet/rainbow with viridis or cividis; if a diverging emphasis is intended, use RdBu or BrBG instead of Spectral. Viridis became matplotlib's default in 2.0 (2017) specifically to retire jet."
+    },
+    {
+      "id": "color-4",
+      "principle": "Prefer colorblind-safe palettes; roughly 8% of men and 0.5% of women have red-green color vision deficiency.",
+      "applies_when": "any figure encodes meaning in color that a reader must distinguish",
+      "check": {
+        "type": "deterministic",
+        "detail": "For continuous scales, require a colorblind-safe colormap (viridis, cividis, or a ColorBrewer scheme flagged colorblind-safe). For categorical scales, require the palette be drawn from a colorblind-safe set (e.g. Okabe-Ito, ColorBrewer Set2/Dark2/Paired safe subset) rather than an arbitrary hue wheel."
+      },
+      "severity": "high",
+      "fix": "Switch continuous scales to cividis; switch categorical scales to the Okabe-Ito 8-color palette or a ColorBrewer qualitative scheme marked colorblind-safe."
+    },
+    {
+      "id": "color-5",
+      "principle": "Avoid relying on red and green as the sole contrast between two categories.",
+      "applies_when": "exactly two (or few) categories are distinguished only by hue, especially red vs green",
+      "check": {
+        "type": "deterministic",
+        "detail": "Detect category color pairs in the plan whose hues fall in the red vs green ranges without a supporting luminance difference or a redundant non-color channel (shape, dash, direct label). Flag such pairs."
+      },
+      "severity": "high",
+      "fix": "Use a colorblind-safe pair such as blue vs orange (Okabe-Ito), or add a redundant encoding (shape, line style, direct labels) so hue is not the only cue."
+    },
+    {
+      "id": "color-6",
+      "principle": "Limit categorical palettes to a small number of hues; distinctness collapses beyond about seven.",
+      "applies_when": "a nominal field is mapped to color with many levels",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count distinct color values assigned to categories in the plan. Flag when the count exceeds 7 (soft), and strongly flag beyond 10."
+      },
+      "severity": "medium",
+      "fix": "Reduce categories by grouping minor levels into 'Other', encode the extra dimension with a non-color channel (facets, position), or directly label series instead of relying on a legend swatch per category."
+    },
+    {
+      "id": "color-7",
+      "principle": "Use color sparingly and purposefully; color should carry information, not decorate.",
+      "applies_when": "elements are colored where a single neutral color or position/length already conveys the data",
+      "check": {
+        "type": "vision",
+        "detail": "Inspect the rendered SVG: if bars/points/lines are given distinct colors that encode no variable already shown by an axis (e.g. one color per bar in a single-series bar chart), the color is decorative. Judge whether removing it loses information."
+      },
+      "severity": "medium",
+      "fix": "Collapse decorative multi-color encodings to one neutral color (e.g. a single gray or brand hue); reserve color for a variable that is not otherwise encoded."
+    },
+    {
+      "id": "color-8",
+      "principle": "Reserve a saturated accent color to highlight the focal series or datum; keep everything else muted.",
+      "applies_when": "the figure has a clear subject or takeaway among several series/marks",
+      "check": {
+        "type": "vision",
+        "detail": "Inspect the rendered figure: the emphasized element should be the most saturated/darkest; supporting context should be low-saturation gray. Flag when all series compete with equal saturation and no focal point is legible."
+      },
+      "severity": "medium",
+      "fix": "Desaturate context series to gray and apply a single saturated accent color to the highlighted series or point."
+    },
+    {
+      "id": "color-9",
+      "principle": "Sequential ramps must run monotonically in luminance (light to dark) so magnitude reads even in grayscale.",
+      "applies_when": "a sequential color scale encodes ordered magnitude",
+      "check": {
+        "type": "deterministic",
+        "detail": "Verify the sequential scheme has monotonic lightness (built-in perceptually uniform or ColorBrewer sequential ramps satisfy this). Flag hand-built sequential ramps whose endpoint luminances are not ordered or that reverse luminance mid-scale."
+      },
+      "severity": "medium",
+      "fix": "Use a built-in monotonic-luminance ramp (viridis, cividis, ColorBrewer Blues/Greens/Oranges) rather than a custom equal-lightness hue sweep."
+    },
+    {
+      "id": "color-10",
+      "principle": "A diverging scale's neutral midpoint must sit at the data's meaningful zero or reference value.",
+      "applies_when": "a diverging color scale is used (e.g. change, anomaly, correlation, surplus vs deficit)",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm the diverging scale's domain is centered so the pale/neutral midpoint maps to the meaningful reference (usually 0). Flag when the domain is asymmetric or auto-scaled to min/max so the neutral color lands at an arbitrary value."
+      },
+      "severity": "high",
+      "fix": "Set the color domain symmetrically about the reference value (e.g. domain [-max, +max] centered on 0) so the midpoint color marks zero deviation."
+    },
+    {
+      "id": "color-11",
+      "principle": "Ensure text and marks meet contrast minimums against their background.",
+      "applies_when": "colored text, labels, or thin marks sit on a colored or dark/light background",
+      "check": {
+        "type": "deterministic",
+        "detail": "Compute WCAG contrast ratio between foreground color and its background from the plan/SVG. Flag body text below 4.5:1 and large text or graphical marks below 3:1."
+      },
+      "severity": "medium",
+      "fix": "Darken or lighten the foreground (or background) until the contrast ratio meets 4.5:1 for text and 3:1 for marks; avoid light-yellow-on-white or mid-gray-on-mid-color combinations."
+    },
+    {
+      "id": "color-12",
+      "principle": "Keep color meaning consistent within and across a figure or small-multiple set; one category maps to one color everywhere.",
+      "applies_when": "a category or value appears in more than one panel, or across paired charts",
+      "check": {
+        "type": "deterministic",
+        "detail": "Across facets/panels in the plan, verify each category label maps to the same color value. Flag any category whose color differs between panels or whose color collides with a different category's color."
+      },
+      "severity": "medium",
+      "fix": "Define one shared category-to-color mapping and apply it to every panel; assign distinct colors so no two categories share a swatch."
+    },
+    {
+      "id": "color-13",
+      "principle": "Do not use hue to encode ordered magnitude; use luminance/saturation progression instead.",
+      "applies_when": "an ordered or continuous field is encoded with a categorical (multi-hue, equal-lightness) palette",
+      "check": {
+        "type": "deterministic",
+        "detail": "Detect when a quantitative or ordinal field in the plan is bound to a categorical/qualitative scheme (distinct hues, no luminance ordering). Flag it."
+      },
+      "severity": "high",
+      "fix": "Replace the categorical scheme with a sequential ramp (viridis or a ColorBrewer sequential scheme) so magnitude reads through ordered lightness."
+    },
+    {
+      "id": "color-14",
+      "principle": "Respect strong color conventions and semantics for the domain rather than arbitrary assignment.",
+      "applies_when": "categories or values carry conventional color meaning (e.g. profit/loss, political parties, temperature, traffic-light status, gendered or culturally loaded categories)",
+      "check": {
+        "type": "manual",
+        "detail": "Judge whether assigned colors contradict an established convention for the subject (e.g. loss shown green and gain red, hotter values shown in cool blue) or introduce an unintended semantic. Requires domain knowledge of the dataset."
+      },
+      "severity": "low",
+      "fix": "Align colors with the domain convention (warm for high/hot, red for loss/danger where locally standard) or, if the convention risks a misleading connotation, choose a neutral scheme and label explicitly."
+    }
+  ]
+}

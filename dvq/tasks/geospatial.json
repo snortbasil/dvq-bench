@@ -1,0 +1,125 @@
+{
+  "family": "geospatial",
+  "tasks": [
+    {
+      "id": "geo-1",
+      "intent": "Map broadband internet access across US counties so I can see where the digital divide is worst.",
+      "domain": "technology",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Percentage of households with a broadband internet subscription for every US county, from the American Community Survey 5-year estimates (most recent release), as a rate bounded between 0 and 100 percent.",
+        "shape": "~3,140 spatial units x 1 quantitative (percentage rate)",
+        "identifier": "ACS B28002 / S2801 (broadband subscription)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "sequential choropleth of counties, using an equal-area US projection (Albers), classed with a defensible scheme (quantiles or equal-interval) or an unclassed continuous ramp",
+        "key_insight": "Broadband access is a normalized rate, so a choropleth is legitimate; the map should reveal a rural-urban and Deep South / Appalachian / tribal-land deficit rather than merely re-drawing where people live."
+      },
+      "failure_modes": [
+        "using a Web Mercator projection so large high-latitude counties are massively area-inflated relative to southern ones, biasing the visual weight of the pattern (Tufte / cartographic honesty: Mercator grossly distorts area and has no place in a US thematic map)",
+        "a rainbow or spectral hue ramp applied to an ordered 0-100 rate, so readers cannot tell which end is high without constant legend reference and equal steps in the data map to perceptually unequal color jumps (color / Ware: ordered quantities need a monotonic lightness ramp, not a rainbow)",
+        "leaving counties with tiny or suppressed samples (high ACS margins of error) fully saturated as if precise, presenting noise as signal in sparsely populated counties (Cairo: honesty about uncertainty)",
+        "arbitrary class breaks that put most counties into one bin, collapsing real variation into a near-uniform color and hiding the divide (Bertin / color: classification scheme must expose the distribution)",
+        "encoding the rate with a red-white-blue diverging palette that implies a meaningful midpoint the data does not have, coding some counties as 'negative' access (color: diverging schemes require a real zero-crossing reference)"
+      ],
+      "applicable_rules": ["color", "ware", "tufte", "cairo", "bertin", "chart-selection"]
+    },
+    {
+      "id": "geo-2",
+      "intent": "Show me where the most COVID deaths happened across US states in 2021.",
+      "domain": "health",
+      "data": {
+        "provider": "US Census / CDC via DataUSA",
+        "description": "Cumulative confirmed COVID-19 deaths by US state during 2021, as an absolute count of deaths per state, alongside state population for optional normalization.",
+        "shape": "51 spatial units x 1 quantitative (count, plus population)",
+        "identifier": "CDC COVID-19 deaths by state 2021",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "for absolute counts, a graduated-symbol map (proportional circles sized by area on state centroids) or a sorted bar chart; if the user's real question is burden, a choropleth of deaths per 100,000 residents",
+        "key_insight": "A raw-count choropleth mostly reproduces the population map (California, Texas, Florida, New York look worst simply because they are large and populous); the honest figure either normalizes to a per-capita rate or uses proportional symbols so area does not double-count population."
+      },
+      "failure_modes": [
+        "coloring a choropleth by raw death counts, which conflates magnitude with polygon area and population and reduces to a map of where people live rather than where risk was highest (Bertin / cartography: choropleths must encode rates, not counts)",
+        "a rainbow palette on the ordered death metric, breaking the perceptual ordering readers need to rank states by severity (color / Ware: use a single-hue sequential ramp for an ordered quantity)",
+        "graduated symbols scaled so circle radius (not area) is proportional to the count, which square-inflates large values and overstates the worst states (Cleveland & McGill / Tufte: symbol area, not radius, must encode the value)",
+        "no legend tying color or circle size to actual death numbers, so the map shows relative shading with no way to read a magnitude (Bertin: an unkeyed visual variable is uninterpretable)",
+        "an emotionally loaded blood-red-only scheme chosen for effect rather than to encode the ordered quantity, biasing interpretation of a neutral count (Cairo: avoid gratuitous emotional coloring)"
+      ],
+      "applicable_rules": ["bertin", "cleveland-mcgill", "color", "ware", "cairo", "chart-selection"]
+    },
+    {
+      "id": "geo-3",
+      "intent": "Map GDP per capita across European countries so I can see the economic gradient from west to east.",
+      "domain": "economics",
+      "data": {
+        "provider": "Eurostat",
+        "description": "GDP per capita in purchasing power standards (PPS) for EU and EFTA countries in the most recent year, indexed or in PPS per inhabitant, a normalized ratio comparable across countries.",
+        "shape": "~35 spatial units x 1 quantitative (ratio per capita)",
+        "identifier": "Eurostat nama_10_pc / sdg_08_10 (GDP per capita, PPS)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "sequential choropleth of Europe on an equal-area or conformal European projection (ETRS89-LAEA / Lambert), with a single-hue lightness ramp; a sorted bar chart is an acceptable companion for exact ranking",
+        "key_insight": "GDP per capita is a proper rate, so a choropleth is design-correct; the map should surface the north-west to south-east gradient (Luxembourg, Ireland, Nordics high; parts of the Balkans low) without letting Russia-adjacent or geographically large countries dominate by area."
+      },
+      "failure_modes": [
+        "a Web Mercator base so northern countries (Iceland, the Nordics) are area-exaggerated relative to southern ones, distorting the visual weight of the gradient (cartographic honesty: Mercator area distortion grows toward the poles)",
+        "quantile classing that lumps a wide PPS range into few bins with breaks at meaningless round numbers, flattening the real spread and hiding the east-west gap (Bertin / color: class breaks must reflect the distribution)",
+        "a diverging red-green palette centered at the EU average, which both implies a false zero-crossing for a strictly positive quantity and is unreadable to red-green colorblind viewers (color / Ware: sequential data needs a sequential ramp; ensure colorblind-safe hues)",
+        "coloring micro-states (Luxembourg, Malta) that are visually invisible on the map while they carry the extreme values, so the headline data points are literally unseeable (cartography: choropleths hide small high-value polygons; annotate or add an inset)",
+        "no reference for the EU average or median, leaving the reader unable to judge which countries are above or below typical (Cairo: a spatial ranking needs an anchor)"
+      ],
+      "applicable_rules": ["color", "bertin", "ware", "tufte", "cairo", "chart-selection"]
+    },
+    {
+      "id": "geo-4",
+      "intent": "Show global surface temperature anomalies by country for the latest year versus the 20th-century baseline.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data (Berkeley Earth / NASA GISS)",
+        "description": "Mean annual surface temperature anomaly by country for the most recent year, in degrees Celsius relative to a fixed 1951-1980 (or 20th-century) baseline, a signed quantity that can be positive or negative.",
+        "shape": "~200 spatial units x 1 quantitative (signed anomaly, degrees C)",
+        "identifier": "temperature-anomaly (by country)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "diverging choropleth of countries on an equal-area world projection (Equal Earth or Robinson), centered at zero anomaly with a blue-to-red diverging ramp",
+        "key_insight": "This is the rare case where a diverging palette is correct because the anomaly has a true, meaningful zero (the baseline); the map should show near-universal warming with the largest positive anomalies concentrated at high northern latitudes (Arctic amplification)."
+      },
+      "failure_modes": [
+        "a Web Mercator world map, which balloons Arctic and high-latitude land (exactly where the strongest anomalies are) and grossly overstates their share of the surface (cartographic honesty: never use Mercator for a global thematic map)",
+        "a single-hue sequential ramp applied to a signed anomaly, so cooling and warming are not visually distinguished and the zero baseline is lost (color: signed data with a real zero demands a diverging scheme centered at zero)",
+        "an asymmetric diverging scale whose neutral midpoint is not pinned at 0 degrees, so slightly warm countries read as neutral and the warming signal is understated (Cairo / Tufte: the diverging midpoint must equal the data's true zero)",
+        "a red-green diverging palette that collapses for the ~8 percent of male viewers with red-green color deficiency, exactly the wrong choice when the entire message is the red-vs-blue split (Ware / color: use a colorblind-safe blue-red or blue-orange diverging ramp)",
+        "coloring countries that are large in area but data-sparse at full confidence, and ignoring that a country-level average smears sub-national variation (MAUP), presenting a coarse aggregate as precise (Cairo: honesty about aggregation and uncertainty)"
+      ],
+      "applicable_rules": ["color", "ware", "tufte", "cairo", "chart-selection", "bertin"]
+    },
+    {
+      "id": "geo-5",
+      "intent": "Map population density across US states so I can see where people are concentrated.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Population per square mile for all 50 states plus DC from the most recent Census / population estimates, a normalized density ratio with an extremely right-skewed distribution (DC and the Northeast corridor orders of magnitude above the Mountain West).",
+        "shape": "51 spatial units x 1 quantitative (density, people per sq mile)",
+        "identifier": "Census population density by state",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "sequential choropleth on an equal-area US projection (Albers) with class breaks that handle the heavy right skew (log-scaled or quantile), and an Alaska/Hawaii inset; a sorted bar or dot plot is a fair companion for exact values",
+        "key_insight": "Density is a proper rate, so a choropleth is valid; because the distribution spans several orders of magnitude, a linear ramp crushes almost every state into the lowest bin, so the design challenge is a classification that reveals the Northeast-corridor concentration without a misleading axis."
+      },
+      "failure_modes": [
+        "a linear (equal-interval) color scale on an extremely right-skewed density, which forces DC and New Jersey to define the top of the ramp and paints nearly every other state the same near-empty color, hiding all real variation (Bertin / color: skewed data needs log or quantile classing)",
+        "using an undisclosed log color ramp with a linear-looking legend, so readers misjudge that a two-shade difference equals a 10x density difference (Tufte / Cairo: a log encoding must be explicitly and legibly disclosed)",
+        "a Web Mercator projection that inflates Alaska into the visually dominant state while it has among the lowest density, inverting the map's message (cartographic honesty: Mercator area distortion)",
+        "a rainbow or spectral palette on the ordered density measure, so the high-to-low reading requires the legend and equal data steps map to unequal perceived color steps (color / Ware: monotonic lightness ramp for ordered quantities)",
+        "dropping Alaska, Hawaii, and DC (an invisible high-value polygon) rather than using insets, so the extremes that carry the story are absent or unseeable (cartography: use insets for detached or tiny high-value units)"
+      ],
+      "applicable_rules": ["color", "bertin", "ware", "tufte", "cairo", "chart-selection"]
+    }
+  ]
+}

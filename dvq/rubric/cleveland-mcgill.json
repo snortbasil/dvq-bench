@@ -1,0 +1,162 @@
+{
+  "source": "cleveland-mcgill",
+  "meta": {
+    "citation": "Cleveland, W. S., & McGill, R. (1984). Graphical Perception: Theory, Experimentation, and Application to the Development of Graphical Methods. Journal of the American Statistical Association, 79(387), 531-554.",
+    "refinement": "Cleveland, W. S. (1985). The Elements of Graphing Data. Wadsworth. Splits volume (rank 6) from color hue/saturation/density (rank 7 tie).",
+    "replication": "Heer, J., & Bostock, M. (2010). Crowdsourcing Graphical Perception: Using Mechanical Turk to Assess Visualization Design. CHI 2010. Replicated the 1984 position/length (proportional-judgment) and luminance-contrast results on Mechanical Turk and added new rectangular-area (treemap/cartogram) experiments.",
+    "accuracy_ranking": [
+      "1. position along a common scale",
+      "2. position along identical, nonaligned scales",
+      "3. length, direction, angle/slope",
+      "4. area",
+      "5. volume, curvature",
+      "6. shading, color saturation (and color hue as the least accurate quantitative channel)"
+    ],
+    "note": "Lower rank number = more accurate quantitative decoding. Choose the encoding at the lowest rank number that the data shape and comparison allow."
+  },
+  "rules": [
+    {
+      "id": "cleveland-mcgill-1",
+      "principle": "Encode the single most important quantitative comparison as position along a common scale.",
+      "applies_when": "The design plan declares a primary comparison or key insight over one quantitative variable that readers must decode accurately.",
+      "check": {
+        "type": "manual",
+        "detail": "Confirm the plan's stated primary variable is mapped to the x or y position of a shared axis (bar height/end, dot position, line y) rather than to area, angle, or color; requires reading intent against the encoding."
+      },
+      "severity": "high",
+      "fix": "Re-map the primary quantitative variable to position on a common scale (e.g. switch pie to bar, bubble size to dot-on-axis)."
+    },
+    {
+      "id": "cleveland-mcgill-2",
+      "principle": "For comparing magnitudes across categories, prefer bars (length/position on a common scale) over pie or donut charts (angle/area).",
+      "applies_when": "Data is a single quantitative value across a set of nominal categories and the user intent is comparison or ranking.",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the plan, mark.type is one of pie|donut|arc while the encoded variable is a magnitude meant to be compared; flag if so. On SVG, presence of <path> arc segments with a shared centroid encoding the compared value."
+      },
+      "severity": "high",
+      "fix": "Replace pie/donut with a sorted horizontal or vertical bar chart on a zero-based common scale."
+    },
+    {
+      "id": "cleveland-mcgill-3",
+      "principle": "Never encode a compared quantity by area of circles or bubbles when a positional encoding is available.",
+      "applies_when": "The plan maps a quantitative field to circle radius, bubble size, or symbol area as the channel readers must read values from.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan has an encoding channel size/radius/area bound to the quantitative field of interest; on SVG, <circle> r or <path> scaled by value. Flag if that field is the primary comparison rather than a tertiary annotation."
+      },
+      "severity": "high",
+      "fix": "Move the compared quantity to position (dot plot, bar); if a third variable truly needs size, keep it secondary and never ask for precise reads from it."
+    },
+    {
+      "id": "cleveland-mcgill-4",
+      "principle": "Never encode a compared quantity by volume or 3D depth; drop all faux-3D effects on 2D data.",
+      "applies_when": "The plan or renderer requests 3D bars, 3D pie, extruded shapes, or perspective, or maps value to a volumetric mark.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan mark.type or style contains 3d|extrude|perspective|isometric|shadow-depth; on SVG, duplicated offset polygons/gradients simulating depth. Flag any presence."
+      },
+      "severity": "high",
+      "fix": "Render a flat 2D bar/dot/line chart; remove depth, extrusion, and drop-shadow-as-volume."
+    },
+    {
+      "id": "cleveland-mcgill-5",
+      "principle": "Use color hue only for nominal categories, never to encode an ordered or continuous quantity readers must decode.",
+      "applies_when": "The plan binds a quantitative or ordinal field to a categorical/hue color scale (rainbow, distinct hues).",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the plan, a field with type quantitative|ordinal is mapped to a color scale of scheme categorical or a multi-hue rainbow. Flag the mismatch between field type and scale type."
+      },
+      "severity": "high",
+      "fix": "For ordered quantities use position/length, or a single-hue sequential/ diverging luminance ramp as a secondary channel; reserve categorical hues for nominal groups only."
+    },
+    {
+      "id": "cleveland-mcgill-6",
+      "principle": "If a quantity is encoded by color, use luminance/saturation on a single-hue sequential ramp rather than varying hue.",
+      "applies_when": "A quantitative field must be shown via color (e.g. choropleth, heatmap) because no positional channel is free.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan color scale for a quantitative field is a perceptually ordered sequential/diverging ramp (allowed) vs an unordered multi-hue categorical/rainbow scale (violation). Allowed ramps include single-hue luminance scales (e.g. Blues, Greys) and perceptually uniform multi-hue sequential scales (e.g. Viridis); flag categorical or rainbow schemes bound to the quantitative field."
+      },
+      "severity": "medium",
+      "fix": "Switch to a perceptually ordered ramp: a single-hue luminance scale (e.g. Blues, Greys) or a perceptually uniform multi-hue sequential scale (e.g. Viridis), or a diverging luminance ramp for signed data; state that precise value reads still require labels or a positional encoding."
+    },
+    {
+      "id": "cleveland-mcgill-7",
+      "principle": "For values on a common baseline, prefer aligned position (bars, dots on one axis) over stacked segments that force nonaligned-scale comparison.",
+      "applies_when": "Multiple series are stacked (stacked bars/area) yet the user needs to compare the inner (non-baseline) segments across categories.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan mark.type is stacked-bar|stacked-area with more than one series AND intent is per-series comparison; the segments above the baseline share no common baseline. Flag that combination."
+      },
+      "severity": "medium",
+      "fix": "Use grouped bars, a dot plot, or small multiples so every compared value sits on a common baseline; reserve stacking for part-to-whole totals only."
+    },
+    {
+      "id": "cleveland-mcgill-8",
+      "principle": "When splitting one quantitative comparison across panels (small multiples), give every panel an identical, shared scale.",
+      "applies_when": "The plan uses faceting or small multiples over a quantitative field.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan facet config sets independent/free axis domains per panel; on SVG, per-facet axis tick values differ. Flag free scales because cross-panel reads then rely on the weaker nonaligned-scale task."
+      },
+      "severity": "medium",
+      "fix": "Fix the axis domain to a single shared range across all panels so cross-panel comparison uses aligned position."
+    },
+    {
+      "id": "cleveland-mcgill-9",
+      "principle": "Keep the value axis zero-based for any length-encoded mark (bars, area) so length is proportional to value.",
+      "applies_when": "The plan uses bars or filled area to encode magnitude.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan y/x quantitative scale domain[0] must equal 0 for mark.type bar|area; on SVG, the baseline of <rect>/<path> aligns to the value-0 gridline. Flag any nonzero baseline."
+      },
+      "severity": "high",
+      "fix": "Set the length-encoded value scale to start at zero; if a nonzero range is essential, switch to a dot/line encoding where position, not length, carries the value."
+    },
+    {
+      "id": "cleveland-mcgill-10",
+      "principle": "Judging slope or angle is less accurate than position, so make trend magnitudes readable from position, not just line steepness.",
+      "applies_when": "The plan uses a line/slope chart where the user must compare rates of change or angles between segments.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, check whether compared trends can be read from y-position at labeled points and gridlines, or only from the visual angle of the lines; unclear-without-position reads are a violation."
+      },
+      "severity": "medium",
+      "fix": "Add reference gridlines, direct value labels at endpoints, or a common baseline so magnitudes are decodable by position rather than estimated angle."
+    },
+    {
+      "id": "cleveland-mcgill-11",
+      "principle": "Do not ask readers to compare areas of irregular regions (map/treemap rectangles, filled shapes) for precise values.",
+      "applies_when": "The plan is a treemap, cartogram, packed layout, or shape whose area encodes a quantity meant to be compared precisely.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Plan mark.type is treemap|cartogram|packed-circle|area-shape encoding the primary quantitative field. Flag when the plan's intent asks for ranking or exact comparison from these areas."
+      },
+      "severity": "medium",
+      "fix": "Add on-mark value labels, or replace with a sorted bar/dot plot when precise comparison is the goal; keep area encodings for rough part-of-whole overviews only."
+    },
+    {
+      "id": "cleveland-mcgill-12",
+      "principle": "Always pick the encoding at the lowest (most accurate) rank the data shape permits before defaulting to a familiar chart type.",
+      "applies_when": "Any encoding decision where more than one chart type could represent the same fields.",
+      "check": {
+        "type": "manual",
+        "detail": "Walk the accuracy ranking (position-common > position-nonaligned > length > angle > area > volume > color) and confirm the chosen channel for the primary field is not beaten by an available higher-accuracy channel given the data cardinality and comparison type."
+      },
+      "severity": "medium",
+      "fix": "Down-rank the primary field's encoding to the most accurate feasible channel (typically position on a common scale or length), demoting angle/area/color to secondary or annotation roles."
+    },
+    {
+      "id": "cleveland-mcgill-13",
+      "principle": "Limit categorical hues to a count readers can distinguish, so color stays a selective (not quantitative) channel.",
+      "applies_when": "The plan maps a nominal field to categorical color hues across many categories.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count distinct categories bound to the categorical color scale in the plan/data; flag when the count exceeds roughly 7-8 distinct hues."
+      },
+      "severity": "low",
+      "fix": "Reduce categories (group a long tail into Other), switch to direct labeling or small multiples, or move the distinction to position/facet instead of hue."
+    }
+  ]
+}

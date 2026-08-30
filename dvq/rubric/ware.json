@@ -1,0 +1,159 @@
+{
+  "source": "ware",
+  "rules": [
+    {
+      "id": "ware-1",
+      "principle": "Encode the single most important quantity a reader must extract at a glance in exactly one strongly preattentive channel (color hue, luminance, size, orientation, or motion) so the target pops out without serial search.",
+      "applies_when": "The design has a primary highlight, category, or 'find the outlier / find my series' intent, e.g. one series or point the story turns on.",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the design plan, confirm the highlighted/focal element differs from all others on at least one preattentive channel (hue, luminance, size, orientation, or motion) and that this channel is not also carrying another variable."
+      },
+      "severity": "high",
+      "fix": "Assign a distinct preattentive attribute (e.g. a saturated highlight color or larger size) to the focal element and neutralize that attribute on the rest."
+    },
+    {
+      "id": "ware-2",
+      "principle": "Do not require the reader to find a target by a conjunction of two preattentive features (e.g. the red-AND-square item); conjunction search is serial and slow, so make the target unique on a single feature.",
+      "applies_when": "A legend or encoding asks the reader to locate items defined by combining two channels at once (color AND shape, size AND orientation).",
+      "check": {
+        "type": "deterministic",
+        "detail": "Scan the encoding spec: flag any element whose retrieval identity depends on matching two visual channels simultaneously rather than one uniquely distinguishing channel."
+      },
+      "severity": "medium",
+      "fix": "Redesign so the key target is distinguished by one feature alone, or split the conjunctive groups into small multiples where each panel isolates one condition."
+    },
+    {
+      "id": "ware-3",
+      "principle": "Carry fine spatial detail (thin lines, small text, dense high-frequency structure, edges) on the luminance channel, not on chromatic contrast alone, because the luminance channel resolves fine detail up to roughly 50-60 cycles/degree while the red-green and yellow-blue opponent channels are low-pass and stop resolving near ~10-12 cycles/degree (Mullen 1985), so chromatic contrast alone blurs small marks.",
+      "applies_when": "The figure contains thin strokes, small glyphs, small labels, gridlines, or high-density detail whose legibility matters.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For every thin/small element (stroke-width below ~1.5px, font-size below ~11px, or dense line marks), verify it has luminance contrast against its background, not only a hue difference at similar lightness."
+      },
+      "severity": "high",
+      "fix": "Add luminance contrast to fine detail (darken or lighten it relative to background); never rely on an isoluminant color pair for small or thin marks."
+    },
+    {
+      "id": "ware-4",
+      "principle": "Never place two isoluminant colors (equal lightness, differing only in hue) at the boundary that must be seen; equiluminant edges are perceptually unstable and appear to shimmer or vibrate.",
+      "applies_when": "Adjacent regions, a line over a fill, or text over a colored background rely on a color difference at matched lightness.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Compute perceptual lightness (e.g. CIELAB L*) of each foreground/background pair at a shared boundary; flag pairs whose L* difference is below ~15 when a hard edge or text must read there."
+      },
+      "severity": "medium",
+      "fix": "Increase the luminance separation of the two colors, or add a thin neutral outline (halo) between them so a luminance edge exists."
+    },
+    {
+      "id": "ware-5",
+      "principle": "Prefer position along a common aligned scale for the value that must be judged most precisely; the perceptual accuracy ranking is position (common scale) > position (nonaligned) > length/direction/angle > area > volume/curvature > shading/color-saturation (Cleveland & McGill 1984, adopted by Ware).",
+      "applies_when": "The reader must compare or read off quantitative magnitudes, and the encoding uses angle (pie), area (bubble), or color saturation for that quantity.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Read the plan's channel used for the primary quantitative variable; flag when it is angle, area, volume, or color-saturation while a position/length encoding (bar, dot plot, aligned axis) would serve the same comparison."
+      },
+      "severity": "high",
+      "fix": "Re-encode the key quantity as position on a common scale (bar chart, dot plot, or aligned small multiples) instead of angle, area, or saturation."
+    },
+    {
+      "id": "ware-6",
+      "principle": "Encode a quantitative (ordered) variable with a colormap whose luminance changes monotonically across the range, so higher values read as consistently lighter or darker and the ordering is perceptually preattentive.",
+      "applies_when": "A continuous or ordinal quantity is mapped to color (heatmap, choropleth, density fill, sequential legend).",
+      "check": {
+        "type": "deterministic",
+        "detail": "Sample the colormap at even steps, compute L* for each stop, and verify L* is monotonic (strictly increasing or decreasing) with no reversals across the sequence."
+      },
+      "severity": "high",
+      "fix": "Replace with a sequential ramp that increases monotonically in luminance (optionally also varying hue), e.g. viridis or a single-hue light-to-dark scale; avoid rainbow/jet."
+    },
+    {
+      "id": "ware-7",
+      "principle": "Reserve hue variation for categorical (nominal) distinctions and luminance/saturation ordering for quantitative ones, matching the channel's natural strength to whether the data is unordered or ordered.",
+      "applies_when": "Color is being assigned to a data field.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Cross-check field type against color encoding: flag a nominal field mapped so categories imply order, or a quantitative field mapped to unordered qualitatively-differing hues with no luminance progression."
+      },
+      "severity": "medium",
+      "fix": "Switch categorical fields to a distinct-hue qualitative palette and quantitative fields to a luminance-ordered sequential (or diverging) ramp."
+    },
+    {
+      "id": "ware-8",
+      "principle": "Limit distinct categorical colors to about twelve or fewer, drawing from widely separated, nameable hues; beyond roughly a dozen, colors become confusable and legend matching fails.",
+      "applies_when": "A nominal field is color-coded and the number of categories is large.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count the distinct colors assigned to categories in the plan; flag when the count exceeds 12, or when any two assigned colors are close in a perceptual space (small delta-E)."
+      },
+      "severity": "medium",
+      "fix": "Cap categorical colors near a dozen well-separated hues; group or 'other'-bucket the long tail, use direct labels/faceting for the rest, or switch to small multiples."
+    },
+    {
+      "id": "ware-9",
+      "principle": "Use proximity to signal grouping: place items that belong together closer to each other than to items in other groups, since spatial nearness is a strong preattentive grouping cue (Gestalt law of proximity).",
+      "applies_when": "The figure has multiple sub-groups, clustered categories, faceted panels, or legend blocks that correspond to conceptual groups.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Compare within-group spacing to between-group spacing in the layout; flag when within-group gaps are not clearly smaller than between-group gaps for elements meant to read as one group."
+      },
+      "severity": "medium",
+      "fix": "Increase the gap between groups (or decrease it within groups) so grouping is carried by spacing; add whitespace between clusters and tighten members inside each cluster."
+    },
+    {
+      "id": "ware-10",
+      "principle": "Group elements by making them share a preattentive attribute (common color, shape, or size) so the similar items read as one set (Gestalt law of similarity), and reserve a shared attribute for a single grouping meaning.",
+      "applies_when": "Related marks across the figure (e.g. all points of one series, all bars of one category) should be perceived as belonging together.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Verify every member of a conceptual group shares one consistent attribute value (color/shape/size) and that no unrelated element accidentally shares it, creating a false group."
+      },
+      "severity": "medium",
+      "fix": "Unify each group's marks on one attribute and ensure no other group reuses that exact value; remove incidental attribute collisions."
+    },
+    {
+      "id": "ware-11",
+      "principle": "To bind elements most strongly, connect them with a line or enclose them in a common region; uniform connectedness (a connecting line or shared bounded area) is the strongest grouping cue and overrides proximity and similarity.",
+      "applies_when": "Points that form a series, a sequence, or a matched pair must be read as linked (e.g. before/after, a trajectory, related annotation and mark).",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, check that linked items are joined by a visible connector or a shared enclosure and that this grouping is not contradicted by proximity/color placing them with the wrong set."
+      },
+      "severity": "medium",
+      "fix": "Add a connecting line, ribbon, or a light bounding region/background tint around the elements that must be read as one unit."
+    },
+    {
+      "id": "ware-12",
+      "principle": "Assign independent data variables to separable channel pairs (e.g. position and color, or color and shape) and reserve integral pairs (red-green with yellow-blue, or width with height) for redundantly encoding a single variable, because integral dimensions fuse and cannot be read independently.",
+      "applies_when": "Two or more distinct variables are encoded on the same set of marks via multiple visual channels.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Identify the channel pair carrying the two variables; flag integral pairings (two color-opponent axes, or x-size vs y-size of one glyph) used to encode two variables that the reader must decode separately."
+      },
+      "severity": "medium",
+      "fix": "Move one variable to a separable channel (position, motion, shape, or a clearly distinct color dimension) so the two can be judged independently."
+    },
+    {
+      "id": "ware-13",
+      "principle": "Respect the limited channel capacity of each visual dimension: do not overload one channel with too many discriminable steps, since accurate absolute judgments per unimodal channel are limited to roughly a handful of levels (about 4-7).",
+      "applies_when": "A channel (size, luminance, saturation, or a discrete legend) is asked to encode many distinguishable levels that the reader must map back to values.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Count the number of intended discriminable levels on any single non-position channel; flag when a legend expects the reader to make absolute value judgments across more than ~7 steps of size/lightness/saturation."
+      },
+      "severity": "low",
+      "fix": "Reduce the number of encoded levels, bin into fewer classes, add direct value labels, or move the variable to a higher-capacity channel such as position."
+    },
+    {
+      "id": "ware-14",
+      "principle": "Do not stack many redundant or competing preattentive cues on one figure; when too many things pop out at once nothing does, so keep the number of simultaneously salient encodings small and let the focal point win.",
+      "applies_when": "The design applies several strong attentional cues at once (bright colors, large sizes, motion, heavy outlines) across many elements.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, judge whether a single focal element clearly dominates; flag when multiple elements compete for first fixation and no clear visual hierarchy emerges."
+      },
+      "severity": "medium",
+      "fix": "Mute secondary and background elements (desaturate, shrink, thin, or gray them) so only the intended focal element(s) retain strong preattentive salience."
+    }
+  ]
+}

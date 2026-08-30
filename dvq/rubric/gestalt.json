@@ -1,0 +1,159 @@
+{
+  "source": "gestalt",
+  "rules": [
+    {
+      "id": "gestalt-1",
+      "principle": "Carry conceptual grouping with spacing: within-group gaps must be visibly smaller than between-group gaps, because the eye reads nearer items as belonging together (Gestalt law of proximity, Wertheimer 1923).",
+      "applies_when": "The figure has clustered categories, grouped/stacked bars, faceted panels, legend blocks, or multi-part axis-tick groupings meant to read as distinct sets.",
+      "check": {
+        "type": "deterministic",
+        "detail": "From the layout coordinates, compute the minimum pairwise gap within each intended group and the minimum gap between adjacent groups; flag any case where between-group gap is not at least ~1.5x the within-group gap."
+      },
+      "severity": "medium",
+      "fix": "Widen the gap between groups or tighten spacing within each group (e.g. add padding between bar clusters, increase panel gutters) so proximity alone signals membership."
+    },
+    {
+      "id": "gestalt-2",
+      "principle": "Do not let incidental proximity create a group that the data does not intend: two unrelated marks placed close together will be read as related.",
+      "applies_when": "Labels, annotations, legend swatches, or marks from different series sit near each other, or a data label lands adjacent to the wrong mark.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered SVG, look for any element sitting closer to a foreign element than to its own group, especially labels/annotations that visually attach to the wrong mark."
+      },
+      "severity": "medium",
+      "fix": "Move the misleading element away from the unrelated neighbor, tie it to its true owner with proximity or a leader line, or add separating whitespace."
+    },
+    {
+      "id": "gestalt-3",
+      "principle": "Encode one grouping meaning with one shared visual attribute (color, shape, or texture) and reuse that exact attribute value nowhere else, since like-looking marks read as one set (Gestalt law of similarity).",
+      "applies_when": "Related marks across the figure (all points of a series, all bars of a category, all panels of a condition) should be perceived as one set.",
+      "check": {
+        "type": "deterministic",
+        "detail": "For each conceptual group in the plan, verify every member shares one consistent attribute value and that no element outside the group is assigned that same value (no accidental attribute collision creating a false group)."
+      },
+      "severity": "medium",
+      "fix": "Unify each group's marks on a single attribute value and ensure no other group reuses it; resolve any collision by re-assigning a distinct value."
+    },
+    {
+      "id": "gestalt-4",
+      "principle": "Bind elements that form one unit by connecting them with a line or ribbon; a drawn connector is a stronger grouping cue than proximity or similarity and overrides them.",
+      "applies_when": "Points form a series, trajectory, ranking flow, or matched pair (before/after, slope chart, parallel coordinates) that must read as a single linked path.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Confirm the plan draws an explicit connector (line/segment/ribbon) between members of each linked sequence, and that the connector does not cross into or visually merge with an unrelated series."
+      },
+      "severity": "medium",
+      "fix": "Add or restore the connecting line/segment/ribbon between the linked marks; where connectors from different series overlap, offset, thin, or de-emphasize the non-focal ones."
+    },
+    {
+      "id": "gestalt-5",
+      "principle": "Group elements by enclosing them in a shared bounded region (a light tint, box, or panel background), since a common enclosure fuses its contents into one perceptual unit even against proximity and similarity.",
+      "applies_when": "A subset of marks (a highlighted range, a cluster, an annotated region, a facet) must be read as one block distinct from the rest.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, judge whether the tinted/bordered region reads as one block containing exactly the intended marks (no outside mark appears to fall inside it and no intended mark appears to sit outside), and whether its border/fill is subtle enough not to compete with the data marks it contains."
+      },
+      "severity": "medium",
+      "fix": "Draw a low-contrast background tint or thin border around exactly the intended set; shrink or lighten it if it dominates, or adjust its bounds to include/exclude the right marks."
+    },
+    {
+      "id": "gestalt-6",
+      "principle": "Let the eye follow smooth paths: arrange sequential or ordered elements along a continuous line or gentle curve, because the visual system prefers to continue along the smoothest trajectory (Gestalt law of continuity/good continuation).",
+      "applies_when": "Ordered data is laid out as a sequence (time series, ranked list, flow, connected scatter) or axis ticks/gridlines guide reading order.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Verify ordered elements progress monotonically along one axis or a single smooth path; flag sequences whose reading order zig-zags, doubles back, or breaks the line where continuity should carry the eye."
+      },
+      "severity": "low",
+      "fix": "Re-lay the sequence along one continuous direction or smooth curve; align tick/gridline spacing so the eye is led along the intended path without jumps."
+    },
+    {
+      "id": "gestalt-7",
+      "principle": "Establish a clear figure-ground separation so data marks (figure) sit unambiguously in front of the chart background and non-data structure (ground); the reader must never have to work out which layer is which.",
+      "applies_when": "Every chart, but especially those with heavy gridlines, filled backgrounds, colored panels, or overlapping translucent marks.",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the plan, verify data marks have higher salience (darker/more saturated, higher z-order, higher luminance contrast against background) than gridlines, reference bands, and panel fills; flag when background structure has contrast >= the data it holds."
+      },
+      "severity": "high",
+      "fix": "Push background structure back (lighten gridlines, mute panel fills, reduce their opacity) and keep data marks on top with strong contrast, so figure clearly reads as figure."
+    },
+    {
+      "id": "gestalt-8",
+      "principle": "Avoid ambiguous figure-ground where negative space and marks are equally weighted (equal area, equal contrast), because the eye flips between readings and the intended figure is lost.",
+      "applies_when": "Densely packed marks, thick bars on a busy background, overlapping semi-transparent shapes, or designs where whitespace shapes could themselves read as figures.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, judge whether foreground and background compete for the 'figure' role (bistable/ambiguous regions, marks and gaps of similar weight); flag any region where the intended figure is not immediately dominant."
+      },
+      "severity": "medium",
+      "fix": "Break the symmetry: increase the contrast, size, or enclosure of the intended figure, or reduce background weight so one layer clearly wins as figure."
+    },
+    {
+      "id": "gestalt-9",
+      "principle": "Give small multiples identical scales, axes, ranges, and encoding across every panel so only the data varies, since shared framing is what lets the eye compare panels at a glance (Tufte, Envisioning Information, 1990).",
+      "applies_when": "The figure is a faceted grid / small-multiple layout of repeated charts across a categorical or temporal dimension.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Compare axis domains, tick sets, color scales, and mark encodings across all panels in the plan; flag any panel whose x/y range, scale type, or encoding differs from the others (free/independent axes when comparison is intended)."
+      },
+      "severity": "high",
+      "fix": "Lock all panels to a common domain, tick scale, and encoding; if one panel's range forces free scaling, split it out or annotate the exception explicitly rather than silently varying the axis."
+    },
+    {
+      "id": "gestalt-10",
+      "principle": "Order small-multiple panels by a meaningful variable (magnitude, time, or a substantive grouping), not alphabetically or arbitrarily, so the grid layout itself carries a readable pattern.",
+      "applies_when": "A small-multiple / faceted grid has more than a few panels and the panel order is currently alphabetical, source-order, or unspecified.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Read the panel ordering key in the plan; flag when panels are ordered alphabetically or by arbitrary id while a quantitative or temporal ordering is available and would reveal a trend across the grid."
+      },
+      "severity": "low",
+      "fix": "Sort panels by a data-driven key (e.g. descending final value, peak, or time) and lay them out in reading order (row-major) so the trend is legible across the grid."
+    },
+    {
+      "id": "gestalt-11",
+      "principle": "Establish exactly one focal point: a single element must win first fixation through contrast in color, size, or position, and everything else must be demoted so the reader's eye lands where the story is.",
+      "applies_when": "The chart has a specific message (an outlier, a highlighted series, a key threshold) that the reader should notice before anything else.",
+      "check": {
+        "type": "vision",
+        "detail": "On the rendered figure, judge whether one element clearly dominates first fixation; flag when multiple elements compete for attention or when the focal element is not the one the message requires."
+      },
+      "severity": "high",
+      "fix": "Amplify the intended focal element (saturated color, larger size, direct label, leading position) and mute all others to a neutral gray/thin baseline so a single visual hierarchy emerges."
+    },
+    {
+      "id": "gestalt-12",
+      "principle": "Use whitespace, not rules and boxes, as the primary separator; generous, deliberate negative space groups and separates content while keeping the data-ink ratio high.",
+      "applies_when": "The layout relies on borders, background fills, or divider lines to separate regions, or margins/padding are cramped and marks crowd the frame edges.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Inspect the plan for separators that could be replaced by spacing (panel borders, legend boxes, heavy dividers) and verify plot margins/padding leave clear breathing room around marks and labels; flag decorative rules and edge-crowding."
+      },
+      "severity": "low",
+      "fix": "Replace boxes and divider rules with whitespace, and enlarge margins/gutters so groups separate by empty space; remove non-load-bearing borders and background fills."
+    },
+    {
+      "id": "gestalt-13",
+      "principle": "Align related elements to shared edges or a common baseline: consistent alignment creates an implied line (continuity) that ties a layout together and makes scanning effortless.",
+      "applies_when": "Multiple text/legend/annotation/title blocks, axis labels, or panel frames are positioned in the layout.",
+      "check": {
+        "type": "deterministic",
+        "detail": "Check that titles, labels, legends, and panel origins share consistent left/baseline alignment (a small set of common x/y anchor values); flag elements offset by a few pixels from an obvious shared edge, and mixed/centered-plus-left alignment."
+      },
+      "severity": "low",
+      "fix": "Snap related elements to a shared alignment edge or grid (common left margin, common baseline); pick one alignment scheme per region and apply it consistently."
+    },
+    {
+      "id": "gestalt-14",
+      "principle": "Prefer direct labeling placed next to its mark over a separate legend, because proximity binds label to data and eliminates the back-and-forth look-up a detached legend forces.",
+      "applies_when": "A line/area/scatter chart with a small number of series (roughly <= 6) currently uses a separate color legend.",
+      "check": {
+        "type": "deterministic",
+        "detail": "In the plan, detect a detached legend on a chart with few series where line/area/point ends have room for adjacent labels; flag when series count is small and end-of-line direct labeling is feasible but a separate legend is used."
+      },
+      "severity": "low",
+      "fix": "Replace the legend with direct labels at each series' end (or nearest clear point), colored to match, so each name sits beside its data by proximity."
+    }
+  ]
+}

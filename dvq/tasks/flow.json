@@ -1,0 +1,125 @@
+{
+  "family": "flow",
+  "tasks": [
+    {
+      "id": "flo-1",
+      "intent": "Show how internal migration moved people between the four US census regions in the most recent year, so I can see the net flow out of the Northeast and into the South.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "State-to-state and region-to-region migration flows from the American Community Survey migration flows tables, aggregated to origin region by destination region (Northeast, Midwest, South, West) with number of movers between each pair for the most recent year, excluding non-movers and movers from abroad.",
+        "shape": "4 origin regions x 4 destination regions (16 directed flows, one asymmetric matrix)",
+        "identifier": "ACS state-to-state migration flows",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "sankey diagram (or a chord diagram) of directed region-to-region flows, with net flows emphasized",
+        "key_insight": "The dominant, asymmetric streams into the South and West and out of the Northeast and Midwest, where the net balance (inflow minus outflow) is the story a well-designed flow figure surfaces rather than burying it in sixteen raw gross flows."
+      },
+      "failure_modes": [
+        "Plotting the 4x4 origin-destination matrix as a grouped bar chart, which forces the reader to mentally reconstruct movement from sixteen disconnected lengths and loses the sense of continuous flow that a Sankey's ribbons carry (chart-selection: flow between states wants a flow encoding, not disaggregated bars).",
+        "Coloring the flow ribbons with an unordered rainbow palette keyed to nothing, when hue should either be reserved to distinguish origin from destination or dropped in favor of a single neutral tone (color: hue must encode a variable, not decorate).",
+        "Showing only gross flows and never computing net migration, so a region with huge churn but near-zero net change reads as a major gainer or loser (Cairo: the graphic must answer the question the user actually asked).",
+        "Making ribbon width non-proportional to the number of movers (e.g. equal-width arrows with a number label), which discards the one length-encoded channel a Sankey exists to provide and reduces it to a labeled diagram (Cleveland & McGill: width should encode magnitude).",
+        "Routing ribbons so they cross and overlap without ordering the nodes to minimize crossings, producing a tangle where individual flows cannot be traced (Gestalt continuity / Bertin: legibility of connected paths)."
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "color", "cairo", "gestalt", "bertin"]
+    },
+    {
+      "id": "flo-2",
+      "intent": "Show how the primary energy mix of the world shifted from fossil fuels toward low-carbon sources between 2000 and today, as a flow of shares moving between categories over time.",
+      "domain": "energy",
+      "data": {
+        "provider": "Our World in Data (Energy Institute Statistical Review)",
+        "description": "Global primary energy consumption by source (coal, oil, gas, nuclear, hydro, wind, solar, other renewables) by year, in exajoules or as a share of total primary energy, from 2000 to the most recent year.",
+        "shape": "8 sources x ~24 years",
+        "identifier": "primary-energy-consumption-by-source",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "stacked area chart (streamgraph or alluvial as alternatives) showing composition shifting over time",
+        "key_insight": "The gradual thickening of the wind and solar bands from near-invisible to a meaningful share, set against the still-dominant but slowly proportionally shrinking fossil bands, where the shape of the transition over time is the message."
+      },
+      "failure_modes": [
+        "Leaving the stacked bands in arbitrary source order so the fastest-growing categories sit in the middle on a wobbling baseline, where their own trend cannot be read because only the bottom band has an aligned baseline (Cleveland & McGill: unaligned-baseline length judgments are among the least accurate).",
+        "Choosing a symmetric streamgraph purely for aesthetics when the user wants to read absolute magnitudes, since the centered baseline removes any common reference and makes every band a floating-baseline comparison (Tufte / chart-selection: form should follow the question).",
+        "Applying a rainbow hue cycle across the eight sources instead of a categorical scheme that reserves a distinct, salient hue for the wind-and-solar story the request centers (color / Ware: salience should follow the intended message).",
+        "Mixing absolute exajoules and percentage-of-total framings within one figure, so the reader cannot tell whether a shrinking band means declining output or merely a declining share (Cairo: honesty about what the encoding measures).",
+        "Adding 3D depth or a glossy gradient fill to the stack, whose depth and lighting cues bias the read of the nearer bands and add ink that encodes nothing (Tufte chartjunk / Cleveland: 3D degrades magnitude judgment)."
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "color", "ware", "cairo", "chart-selection"]
+    },
+    {
+      "id": "flo-3",
+      "intent": "Trace how a birth cohort of students flows through the education pipeline, from entering upper-secondary to completing a tertiary degree, showing where people drop out at each transition.",
+      "domain": "education",
+      "data": {
+        "provider": "OECD (Education at a Glance)",
+        "description": "Educational attainment transition data for a recent cohort in a given country: the share of an age cohort that completes upper-secondary, enters tertiary, and completes a tertiary degree, with the drop-off (non-continuation) quantified at each transition.",
+        "shape": "3-4 sequential stages with branching flows (continue vs. leave) at each stage",
+        "identifier": "OECD EAG transitions from education to work / attainment by stage",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "sankey / alluvial diagram showing the cohort splitting into continue-and-leave branches at each stage",
+        "key_insight": "Where the pipeline leaks most — the specific transition (often secondary-to-tertiary entry or tertiary entry-to-completion) at which the largest fraction of the cohort peels off — made visible as the widest departing ribbon."
+      },
+      "failure_modes": [
+        "Rendering the stages as a funnel chart with centered, tapering bars, whose symmetric taper encodes each stage's magnitude by a width the eye reads off two moving edges rather than a common baseline, degrading comparison of the drop at each step (Cleveland & McGill; chart-selection: a funnel hides where the loss occurs).",
+        "Showing only the surviving stage-by-stage totals as a descending bar chart and never depicting the departing branches, so the question 'where do people drop out' is answered only by subtraction the reader must perform (Cairo: show the flow the user asked about).",
+        "Letting node heights or ribbon widths not sum consistently across a stage (in and out of a node not conserved), so the diagram implies people appearing or vanishing and violates the flow-conservation the encoding promises (Tufte: graphical integrity).",
+        "Coloring the continue and leave branches with hues that carry no consistent meaning across stages, so the reader cannot follow retention versus attrition as a through-line (color / Gestalt: consistent hue should track a consistent category).",
+        "Cramming stage labels and percentages in a decorative or condensed display face at low contrast, so the transition rates that are the whole point are hard to read (typography: legibility of quantitative labels)."
+      ],
+      "applicable_rules": ["cleveland-mcgill", "chart-selection", "cairo", "tufte", "color", "gestalt", "typography"]
+    },
+    {
+      "id": "flo-4",
+      "intent": "Show how countries moved between World Bank income groups (low, lower-middle, upper-middle, high income) between 2000 and today, so I can see which economies graduated upward.",
+      "domain": "economics",
+      "data": {
+        "provider": "World Bank",
+        "description": "World Bank income-group classification of each economy at two points in time (2000 and the most recent fiscal year), where each country occupies one of four ordered categories (low, lower-middle, upper-middle, high income) at each date.",
+        "shape": "~200 countries x 2 time points x 4 ordered categories (transition matrix)",
+        "identifier": "World Bank income group classifications (historical)",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "alluvial / slopegraph-style transition diagram between two ordered category states, with categories stacked in income order",
+        "key_insight": "The net upward drift of the distribution — the sizeable ribbons of countries graduating from lower-middle to upper-middle and from upper-middle to high income — against the smaller counter-flows of downgrades, revealing the direction and volume of mobility between income tiers."
+      },
+      "failure_modes": [
+        "Stacking the four income categories in an arbitrary (e.g. alphabetical) order rather than the intrinsic low-to-high ranking, discarding the ordinal structure that lets 'upward' and 'downward' movement read as up and down on the page (Bertin: ordered data demands an ordered arrangement).",
+        "Encoding the four ordered income tiers with a qualitative rainbow palette instead of a sequential ramp, so the reader loses the sense that the categories themselves are ranked (color: ordered quantity wants an ordered scale, not unordered hue).",
+        "Showing only two stacked bars of category totals at the endpoints without the connecting ribbons, so the composition change is visible but the actual movement of countries between tiers — the requested transitions — is invisible (chart-selection: a transition needs its flows drawn).",
+        "Drawing crossing ribbons without ordering nodes to minimize crossings, so upgrade and downgrade streams tangle and the net direction of mobility cannot be traced (Gestalt continuity).",
+        "Making ribbon widths not proportional to the number of countries (or letting the two endpoints use inconsistent width scales), breaking the length-encodes-magnitude contract and the conservation of totals across the diagram (Cleveland & McGill; Tufte graphical integrity)."
+      ],
+      "applicable_rules": ["bertin", "color", "chart-selection", "gestalt", "cleveland-mcgill", "tufte"]
+    },
+    {
+      "id": "flo-5",
+      "intent": "Show how global desktop browser market share shifted between the major browsers from 2009 to today, so I can see Internet Explorer's collapse and Chrome's rise take over.",
+      "domain": "technology",
+      "data": {
+        "provider": "StatCounter Global Stats",
+        "description": "Monthly worldwide desktop browser market share, in percent, for the major browsers (Internet Explorer, Chrome, Firefox, Safari, Edge, Opera, others) from 2009 to the present.",
+        "shape": "6-7 series x ~16 years (monthly)",
+        "identifier": "StatCounter desktop browser market share",
+        "fetchable": false
+      },
+      "expected": {
+        "chart_family": "stacked area chart (or streamgraph) of share over time, where the bands together sum to 100 percent",
+        "key_insight": "The crossover moment when Chrome's rising band overtakes the collapsing Internet Explorer band, and the subsequent consolidation into a Chrome-dominated market, told as one browser's share flowing into another's over time."
+      },
+      "failure_modes": [
+        "Plotting six or seven overlapping unstacked lines in one frame (a spaghetti chart), so the individual crossovers cannot be traced and the shares no longer visibly sum to the whole (Gestalt: too many competing continuities defeat figure-ground; chart-selection: composition-over-time wants a stacked form).",
+        "Ordering the stacked bands so the two protagonists (Chrome and Internet Explorer) are separated by other bands, forcing their crossover to be read across intervening wobbling baselines instead of adjacent aligned edges (Cleveland & McGill: place the compared series on a shared baseline).",
+        "Truncating the vertical axis below 100 percent or above zero on a share chart, so the bands no longer tile the full whole and the part-to-whole reading breaks (Tufte: honest baseline for a composition).",
+        "Assigning each browser a saturated rainbow hue with no salience given to the Chrome-versus-IE story the request centers, when a categorical scheme should reserve emphasis for the two protagonists and mute the rest (color / Ware: salience budget follows the message).",
+        "Aggregating monthly data to a few annual snapshots, smoothing away the precise timing of the crossover that is the single most interesting event in the series (Tufte: show the data at its native resolution; Cairo: do not hide what the data shows)."
+      ],
+      "applicable_rules": ["gestalt", "cleveland-mcgill", "tufte", "color", "ware", "chart-selection", "cairo"]
+    }
+  ]
+}

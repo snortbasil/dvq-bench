@@ -1,0 +1,125 @@
+{
+  "family": "comparison",
+  "tasks": [
+    {
+      "id": "com-1",
+      "intent": "Compare male and female labor force participation rates side by side for the G7 countries in the latest year, so I can see the size of the gender gap in each.",
+      "domain": "economics",
+      "data": {
+        "provider": "World Bank",
+        "description": "Labor force participation rate (percent of population aged 15+) reported separately for men and women, for the seven G7 countries in the latest available year. Two quantitative series per country.",
+        "shape": "7 categories x 2 series (percentage)",
+        "identifier": "SL.TLF.CACT.MA.ZS / SL.TLF.CACT.FE.ZS",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "dumbbell (connected-dot) plot, one row per country, sorted by the size of the male-female gap; grouped horizontal bars are an acceptable alternative",
+        "key_insight": "The two-series framing makes the within-country gender gap the visual unit of comparison, so the countries with the widest and narrowest gaps read directly off the length of the connectors rather than requiring the reader to subtract two bar heights."
+      },
+      "failure_modes": [
+        "plotting the two series as separate charts or separate panels so the male-female gap for a given country must be reconstructed across figures instead of being encoded as a single visible distance (Cairo: the comparison the intent names should be the visual primitive)",
+        "grouped bars with the two series colored by hues that are not distinguishable at the bar sizes shown, or without a legend, so the reader cannot tell which bar is which sex (Ware: the series-encoding hue must be discriminable and labeled)",
+        "value axis truncated so it does not start at zero, breaking the proportional-length reading of a bounded percentage and distorting the apparent gap (Tufte lie factor)",
+        "unsorted rows so the country with the largest gap is not anchored, defeating the 'size of the gap in each' comparison the user asked for (Cleveland & McGill ordering)",
+        "a single stacked bar per country stacking male on top of female, implying the two rates sum to a meaningful whole when they are independent per-sex percentages (chart-selection: not a part-to-whole relationship)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "cairo", "ware", "chart-selection"]
+    },
+    {
+      "id": "com-2",
+      "intent": "Compare urban versus rural access to at-least-basic drinking water across a set of countries in Sub-Saharan Africa for the latest year.",
+      "domain": "health",
+      "data": {
+        "provider": "WHO/UNICEF JMP (via World Bank)",
+        "description": "Share of population with access to at-least-basic drinking water, reported separately for urban and rural populations, for roughly a dozen Sub-Saharan African countries in the latest year. Two paired quantitative series per country.",
+        "shape": "12 categories x 2 series (percentage, bounded 0-100)",
+        "identifier": "SH.H2O.BASW.UR.ZS / SH.H2O.BASW.RU.ZS",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "dumbbell plot with urban and rural points connected per country, sorted by the urban-rural gap; paired/grouped horizontal bars are acceptable",
+        "key_insight": "The urban-rural divide is the comparison of interest, and encoding each country as a connected pair makes the countries where rural access lags farthest behind urban access immediately legible as the longest connectors."
+      },
+      "failure_modes": [
+        "y-axis truncated to a narrow high window (e.g. 60-100%) so a modest urban-rural gap looks like a chasm for a bounded percentage (Tufte lie factor)",
+        "using the same or near-identical color for the urban and rural series so the two ends of each pair cannot be told apart (Ware / color: paired series need clearly distinct, labeled encodings)",
+        "rows left in alphabetical order rather than sorted by the gap, so the widest urban-rural disparities the comparison exists to reveal are scattered (Cleveland & McGill ordering)",
+        "a choropleth map of one series that answers 'where' but cannot show the two-series urban-vs-rural comparison at all, dropping half the data the intent requires (Cairo: map answers where, not the paired comparison)",
+        "stacking urban and rural into one bar as if they were components of a single total, when they are two independent coverage rates for different subpopulations (chart-selection: not part-to-whole)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "color", "cairo", "chart-selection"]
+    },
+    {
+      "id": "com-3",
+      "intent": "Compare each G20 country's per-capita CO2 emissions in the latest year against its level a decade earlier, so I can see who has cut and who has risen.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Per-capita CO2 emissions (tonnes per person) for the 19 sovereign G20 countries at two time points: the latest year and ten years prior. Two quantitative values per country.",
+        "shape": "19 categories x 2 time points",
+        "identifier": "co2-emissions-per-capita",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "dumbbell (before-after) plot, one row per country with the two years connected and an arrowhead or color indicating direction of change, sorted by latest value or by magnitude of change",
+        "key_insight": "Encoding each country's two time points as a connected pair turns the decade of change into a directly readable direction and distance, separating the countries that cut per-capita emissions from those that rose without collapsing the comparison into a single number."
+      },
+      "failure_modes": [
+        "reducing each country to a single change number in a bar chart, discarding the levels so the reader cannot see that a large percentage cut came off a small base or vice versa (Cairo: the two-point comparison carries the meaning the intent asks for)",
+        "value axis not anchored at zero so the connected before-and-after points no longer sit at proportionally correct heights and the change distances are distorted (Tufte zero-baseline)",
+        "coloring the two time points with hues that read as unrelated categories rather than as ordered endpoints of a change, obscuring the before-to-after direction (color / Ware: sequence needs an ordered, direction-legible encoding)",
+        "rows unsorted so the countries with the largest increases and decreases are not anchored at the extremes the comparison is meant to surface (Cleveland & McGill ordering)",
+        "overplotting all 19 pairs on a single crowded slope chart with crossing lines and colliding labels, when a sorted small-row dumbbell layout keeps each pair legible (Cairo legibility; gestalt: avoid the spaghetti-crossing that defeats pairwise reading)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "cairo", "color", "gestalt"]
+    },
+    {
+      "id": "com-4",
+      "intent": "Compare the change in median household income across the four US census regions between two American Community Survey releases, so I can see which regions gained and which stagnated.",
+      "domain": "demographics",
+      "data": {
+        "provider": "US Census / DataUSA",
+        "description": "Median household income in inflation-adjusted dollars for the four US census regions (Northeast, Midwest, South, West) at two ACS releases roughly five years apart. Two quantitative values per region.",
+        "shape": "4 categories x 2 time points",
+        "identifier": "B19013_001E by region",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "slope chart (two parallel value axes, one line per region) or a paired/grouped bar chart, with regions directly labeled",
+        "key_insight": "With only four regions and two time points, a slope chart makes both the level and the direction of change comparable at once, showing which regions pulled ahead and which flattened without forcing the reader to hold four pairs of numbers in mind."
+      },
+      "failure_modes": [
+        "value axis not starting at zero on a bar rendering, so a modest income gain over five years looks like a dramatic jump and the between-region comparison is exaggerated (Tufte lie factor)",
+        "a rainbow palette assigning an arbitrary hue to each of the four regions when direct line labels would carry identity, spending the color channel on nominal information the labels already provide (Bertin / Tufte data-ink)",
+        "using an area or bubble encoding for the income values, where a 1.3x difference reads as a 1.7x difference because area grows quadratically (Cleveland & McGill: area weaker than position/length)",
+        "presenting the two releases in separate side-by-side charts so the reader must eyeball the change across figures rather than reading it as a slope or a paired distance (Cairo: the change is the comparison the intent asks for)",
+        "connecting the four regions with a single continuous line across the category axis as if 'region' were an ordered continuum, implying a trend through nominal categories (chart-selection: regions are nominal, not sequential)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "cairo", "bertin", "chart-selection"]
+    },
+    {
+      "id": "com-5",
+      "intent": "Compare tertiary attainment for younger adults (25-34) versus older adults (55-64) across OECD countries, so I can see where the generational education gap is widest.",
+      "domain": "education",
+      "data": {
+        "provider": "OECD (via World Bank education statistics)",
+        "description": "Percentage with tertiary educational attainment for two age cohorts, 25-34 and 55-64, latest year, for OECD member countries. Two paired quantitative series per country.",
+        "shape": "38 categories x 2 series (percentage)",
+        "identifier": "SE.TER.CUAT.BA.ZS by age cohort",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "dumbbell plot, one row per country connecting the younger and older cohort, sorted by the size of the generational gap, with the two cohorts consistently colored",
+        "key_insight": "Encoding each country as a connected pair of cohorts makes the generational expansion of tertiary education the visual unit, so the countries where the young dramatically out-attain the old separate cleanly from those where the two cohorts nearly coincide."
+      },
+      "failure_modes": [
+        "rows sorted by country name rather than by the generational gap, hiding the widest-to-narrowest gradient the comparison exists to reveal (Cleveland & McGill ordering)",
+        "value axis starting above zero (e.g. at 20%) so a bounded percentage no longer reads proportionally and the cohort gap is visually inflated (Tufte lie factor)",
+        "a categorical rainbow assigning a distinct hue to each of the 38 countries on top of the two-cohort encoding, blowing past the preattentive hue limit and adding no information the row and the cohort colors do not already carry (Ware preattentive limits; color: hue is nominal and redundant here)",
+        "collapsing each country to a single gap number in a lone bar, discarding the two cohort levels so the reader cannot see whether a wide gap comes from a high young value or a low old one (Cairo: the paired levels carry the point)",
+        "a 100%-stacked bar treating the two cohort rates as shares of one whole, when they are independent attainment percentages for two separate populations (chart-selection: these are not components of a single total)"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "color", "ware", "cairo", "chart-selection"]
+    }
+  ]
+}

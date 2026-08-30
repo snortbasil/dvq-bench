@@ -1,0 +1,125 @@
+{
+  "family": "relationship",
+  "tasks": [
+    {
+      "id": "rel-1",
+      "intent": "Show how life expectancy relates to GDP per capita across countries for the most recent year, and whether the relationship flattens at high incomes.",
+      "domain": "economics",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "One recent year of national life expectancy at birth paired with GDP per capita (PPP, constant international-$) for ~180 countries, with population available for point sizing and world region for grouping.",
+        "shape": "~180 countries x 2 quantitative (GDP per capita, life expectancy) + 1 quantitative for size (population) + 1 categorical (region)",
+        "identifier": "life-expectancy-vs-gdp-per-capita",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "scatterplot with logarithmic x-axis (GDP per capita), optionally bubble-sized by population and colored by region",
+        "key_insight": "Life expectancy rises steeply with income at low GDP and then saturates — the Preston-curve concavity that only reads correctly once income is on a log scale."
+      },
+      "failure_modes": [
+        "plotting GDP per capita on a linear x-axis, which crushes 150 poor countries into the left margin and hides the concave saturation Cleveland's position-along-a-common-scale judgment depends on",
+        "connecting the points with a line as if the cross-section were a time series, manufacturing a nonexistent trajectory through unordered countries",
+        "encoding population by bubble diameter instead of area, so a country with 4x the population looks 16x larger and overstates the big nations (Tufte lie factor)",
+        "a rainbow region palette that assigns maximally saturated hues at random, forcing serial visual search instead of letting continents pop out as Gestalt groups",
+        "hiding the log transform without an annotation or gridline labels, so a reader mistakes the flattening curve for a linear ceiling"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "chart-selection", "tufte", "color", "cairo"]
+    },
+    {
+      "id": "rel-2",
+      "intent": "Is a country's adult obesity prevalence associated with its per-capita daily calorie supply? Plot the two against each other for the latest available year.",
+      "domain": "health",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Latest-year national adult obesity prevalence (% of adults with BMI >= 30) paired with daily per-capita dietary energy supply (kcal/person/day) across ~170 countries.",
+        "shape": "~170 countries x 2 quantitative (kcal supply, obesity prevalence)",
+        "identifier": "obesity-vs-daily-caloric-supply",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "scatterplot with a robust (LOWESS or linear) trend line and shaded confidence band",
+        "key_insight": "A positive but noisy association — higher calorie supply tracks higher obesity, but the scatter is wide enough that supply alone is a weak predictor, which the spread should make visually honest."
+      },
+      "failure_modes": [
+        "reducing 170 countries to a single correlation coefficient printed on an empty panel, discarding the scatter that reveals outliers and heteroscedasticity (anti-Anscombe)",
+        "drawing a bar chart of obesity ranked by country, which answers 'who is highest' but destroys the two-variable relationship the ask is about",
+        "extrapolating the trend line past the data cloud to the axis origin, implying a prediction where no observations exist",
+        "using a dark-on-dark or low-contrast point color that fails WCAG contrast against the plot background, so dense clusters become an unreadable smear",
+        "overplotting hundreds of opaque markers with no transparency or jitter, hiding density where countries pile up"
+      ],
+      "applicable_rules": ["chart-selection", "cleveland-mcgill", "cairo", "color", "tufte"]
+    },
+    {
+      "id": "rel-3",
+      "intent": "Across countries, does higher annual per-capita CO2 emissions go with higher GDP per capita? Show the recent-year relationship.",
+      "domain": "climate",
+      "data": {
+        "provider": "Our World in Data",
+        "description": "Recent-year national per-capita CO2 emissions (tonnes/person) paired with GDP per capita (PPP, constant international-$) for ~180 countries, with region available for coloring.",
+        "shape": "~180 countries x 2 quantitative (GDP per capita, CO2 per capita) + 1 categorical (region)",
+        "identifier": "co2-emissions-vs-gdp",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "scatterplot on log-log axes with a fitted power-law slope, colored by region",
+        "key_insight": "A near-linear positive relationship on log-log axes — emissions scale with income as a power law — with a handful of oil-economy and low-carbon-grid outliers sitting off the main band."
+      },
+      "failure_modes": [
+        "linear-linear axes that compress the poorest 120 countries into a corner and let a few high-emission petrostates dominate the whole frame",
+        "dual y-axes plotting CO2 and GDP as two separate series against country index, inviting a spurious eyeballed correlation from arbitrary axis alignment (Tufte's dual-axis warning)",
+        "a sequential single-hue ramp used to encode the unordered categorical 'region', misapplying an ordered color scale to a nominal variable (Bertin selective vs ordered)",
+        "labeling every one of 180 points, producing a wall of overlapping text that buries the signal instead of annotating only the informative outliers",
+        "omitting units on the axes so a reader cannot tell tonnes from kilograms or PPP from nominal dollars"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "tufte", "bertin", "color", "chart-selection"]
+    },
+    {
+      "id": "rel-4",
+      "intent": "For US states, is median household income related to the share of adults with a bachelor's degree or higher? Plot one against the other.",
+      "domain": "education",
+      "data": {
+        "provider": "US Census / DataUSA (ACS)",
+        "description": "Most recent ACS 1-year estimates by state: median household income (US$) paired with the percentage of adults 25+ holding a bachelor's degree or higher, 50 states plus DC.",
+        "shape": "51 states x 2 quantitative (educational attainment %, median household income)",
+        "identifier": "acs-b19013-median-household-income-vs-b15003-bachelors-share",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "scatterplot with direct point labels for notable states and a linear trend line",
+        "key_insight": "A strong positive association between the college-educated share and median income, with a clear regression slope and a few high-cost or resource-economy states departing from the line."
+      },
+      "failure_modes": [
+        "a truncated income y-axis starting at $50k that visually inflates the spread between states and exaggerates how steep the relationship is (Tufte lie factor)",
+        "state abbreviations rendered as a legend keyed by marker color across 51 categories, an impossible color-matching task instead of direct labeling",
+        "a grouped or clustered bar chart per state, which encodes two variables as adjacent bars and defeats the point of showing their covariation",
+        "computing income in nominal dollars without noting cost-of-living, then reading the raw slope as a causal return to education in the annotation",
+        "a background gridline density so heavy that the data points recede — non-data ink dominating the plot (Tufte data-ink ratio)"
+      ],
+      "applicable_rules": ["tufte", "cleveland-mcgill", "chart-selection", "cairo", "typography"]
+    },
+    {
+      "id": "rel-5",
+      "intent": "Across countries, does greater electricity consumption per capita come with a higher share of the population having internet access? Show the relationship for the latest year.",
+      "domain": "technology",
+      "data": {
+        "provider": "World Bank",
+        "description": "Latest-year national electric power consumption per capita (kWh/person) paired with the share of individuals using the internet (% of population), ~150 countries, with income group available for grouping.",
+        "shape": "~150 countries x 2 quantitative (electricity per capita, internet use %) + 1 categorical (income group)",
+        "identifier": "EG.USE.ELEC.KH.PC + IT.NET.USER.ZS",
+        "fetchable": true
+      },
+      "expected": {
+        "chart_family": "scatterplot with a logarithmic x-axis (electricity per capita), colored by World Bank income group",
+        "key_insight": "A saturating positive relationship — internet adoption climbs sharply with electricity access at low consumption and plateaus near 100% for high-consumption countries, a ceiling effect visible only on a log x-axis."
+      },
+      "failure_modes": [
+        "a linear electricity axis that piles low-consumption countries against the y-axis and hides the sharp early rise, defeating the position-on-common-scale comparison",
+        "a rainbow (spectral) palette mapped to the ordered income groups, so the reader cannot tell low- from high-income order because hue carries no natural magnitude ranking (Ware / Bertin ordered encoding)",
+        "letting the internet-share axis exceed 100% or run negative because auto-scaling ignored the variable's natural [0,100] bounds",
+        "connecting the country points into a line, imposing a false continuous trajectory on an unordered cross-section",
+        "encoding income group redundantly by both hue and marker shape while omitting the legend, so neither channel is decodable"
+      ],
+      "applicable_rules": ["cleveland-mcgill", "ware", "bertin", "color", "chart-selection"]
+    }
+  ]
+}
